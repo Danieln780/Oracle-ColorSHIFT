@@ -5,9 +5,12 @@ const BLE = {
   characteristics: new Map(),
   writeChar: null,
 
-  // Known service/characteristic UUIDs for generic BLE LED controllers
-  SERVICE_UUID: '0000fff0-0000-1000-8000-00805f9b34fb',
-  CHAR_UUID: '0000fff3-0000-1000-8000-00805f9b34fb',
+  // Oracle-B1E4 confirmed UUIDs (from nRF Connect scan)
+  SERVICE_UUID: '0000ffd5-0000-1000-8000-00805f9b34fb',       // Write service
+  CHAR_UUID: '0000ffd9-0000-1000-8000-00805f9b34fb',          // Write characteristic
+  NOTIFY_SERVICE_UUID: '0000ffd0-0000-1000-8000-00805f9b34fb', // Notify service
+  NOTIFY_CHAR_UUID: '0000ffd4-0000-1000-8000-00805f9b34fb',    // Notify characteristic
+  notifyChar: null,
 
   // Device name prefixes — Oracle BC2 uses generic BLE LED chipset
   // These are the known names these controllers broadcast as
@@ -16,17 +19,18 @@ const BLE = {
   async connect() {
     // Try specific name filters first, fall back to accepting all devices
     let device;
+    const optServices = [this.SERVICE_UUID, this.NOTIFY_SERVICE_UUID];
     try {
       device = await navigator.bluetooth.requestDevice({
         filters: this.DEVICE_FILTERS.map(name => ({ namePrefix: name })),
-        optionalServices: [this.SERVICE_UUID]
+        optionalServices: optServices
       });
     } catch (err) {
       // If no matching device found with filters, let user pick any device
       if (err.name === 'NotFoundError') {
         device = await navigator.bluetooth.requestDevice({
           acceptAllDevices: true,
-          optionalServices: [this.SERVICE_UUID]
+          optionalServices: optServices
         });
       } else {
         throw err;
@@ -41,31 +45,44 @@ const BLE = {
 
   async discoverServices() {
     this.writeChar = null;
+    this.notifyChar = null;
     this.characteristics.clear();
     this.services = [];
 
-    // Try the known service UUID first
+    // Try known Oracle UUIDs first (FFD5 write service, FFD0 notify service)
     try {
-      const service = await this.server.getPrimaryService(this.SERVICE_UUID);
-      this.services = [service];
-      try {
-        const char = await service.getCharacteristic(this.CHAR_UUID);
-        this.writeChar = char;
-        this.characteristics.set(char.uuid, char);
-        console.log('[BLE] Found known LED characteristic:', this.CHAR_UUID);
-      } catch (e) {
-        // Known char not found, enumerate all
-        const chars = await service.getCharacteristics();
-        for (const char of chars) {
-          this.characteristics.set(char.uuid, char);
-          if (!this.writeChar && (char.properties.write || char.properties.writeWithoutResponse)) {
-            this.writeChar = char;
-          }
-        }
-      }
+      const writeService = await this.server.getPrimaryService(this.SERVICE_UUID);
+      this.services.push(writeService);
+      const writeChar = await writeService.getCharacteristic(this.CHAR_UUID);
+      this.writeChar = writeChar;
+      this.characteristics.set(writeChar.uuid, writeChar);
+      console.log('[BLE] Found write characteristic: FFD9');
     } catch (e) {
-      // Known service not found, enumerate all services
-      console.log('[BLE] Known service not found, discovering all...');
+      console.log('[BLE] FFD5/FFD9 not found, will scan all services');
+    }
+
+    // Try notify service
+    try {
+      const notifyService = await this.server.getPrimaryService(this.NOTIFY_SERVICE_UUID);
+      this.services.push(notifyService);
+      const notifyChar = await notifyService.getCharacteristic(this.NOTIFY_CHAR_UUID);
+      this.notifyChar = notifyChar;
+      this.characteristics.set(notifyChar.uuid, notifyChar);
+      // Subscribe to notifications
+      await notifyChar.startNotifications();
+      notifyChar.addEventListener('characteristicvaluechanged', (event) => {
+        const value = new Uint8Array(event.target.value.buffer);
+        const hex = Array.from(value).map(b => b.toString(16).padStart(2, '0')).join(' ');
+        console.log('[BLE] Notify <-', hex);
+      });
+      console.log('[BLE] Subscribed to notify characteristic: FFD4');
+    } catch (e) {
+      console.log('[BLE] FFD0/FFD4 notify not available:', e.message);
+    }
+
+    // Fallback: enumerate all services if we didn't find the write char
+    if (!this.writeChar) {
+      console.log('[BLE] Falling back to full service discovery...');
       const services = await this.server.getPrimaryServices();
       this.services = services;
       for (const service of services) {
