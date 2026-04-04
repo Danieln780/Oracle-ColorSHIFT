@@ -36,9 +36,62 @@
       </div>
       <div class="quick-colors" id="quick-colors"></div>
     </section>
-    <section id="tab-effects" class="tab-panel"></section>
-    <section id="tab-music" class="tab-panel"></section>
-    <section id="tab-presets" class="tab-panel"></section>
+    <section id="tab-effects" class="tab-panel">
+      <div class="effect-modes">
+        <button class="effect-card" data-mode="fade">
+          <span class="effect-icon">~</span>
+          <span class="effect-label">Fade</span>
+        </button>
+        <button class="effect-card" data-mode="strobe">
+          <span class="effect-icon">!</span>
+          <span class="effect-label">Strobe</span>
+        </button>
+        <button class="effect-card" data-mode="chase">
+          <span class="effect-icon">&gt;</span>
+          <span class="effect-label">Chase</span>
+        </button>
+        <button class="effect-card" data-mode="pulse">
+          <span class="effect-icon">O</span>
+          <span class="effect-label">Pulse</span>
+        </button>
+      </div>
+      <div id="effect-controls" class="effect-controls"></div>
+      <div class="sequencer-section">
+        <h3>Custom Sequence</h3>
+        <div id="seq-steps" class="seq-steps"></div>
+        <button id="seq-add-btn" class="secondary-btn">+ Add Step</button>
+        <div class="seq-controls">
+          <div id="seq-preview-indicator" class="seq-preview-indicator"></div>
+          <button id="seq-preview-btn" class="primary-btn">Preview</button>
+          <button id="seq-stop-btn" class="secondary-btn">Stop</button>
+        </div>
+      </div>
+    </section>
+    <section id="tab-music" class="tab-panel">
+      <div class="visualizer-container">
+        <canvas id="audio-visualizer" width="320" height="120"></canvas>
+      </div>
+      <div class="music-status">
+        <div id="music-color-indicator" class="music-color-indicator"></div>
+        <button id="music-start-btn" class="primary-btn">Start Listening</button>
+      </div>
+      <div class="slider-row">
+        <label>Sensitivity</label>
+        <input type="range" id="sensitivity-slider" min="1" max="100" value="50">
+      </div>
+      <div class="music-modes">
+        <button class="mode-btn active" data-mode="balanced">Balanced</button>
+        <button class="mode-btn" data-mode="bass">Bass Heavy</button>
+        <button class="mode-btn" data-mode="treble">Treble Heavy</button>
+      </div>
+    </section>
+    <section id="tab-presets" class="tab-panel">
+      <div class="preset-save-row">
+        <input type="text" id="preset-name-input" placeholder="Preset name..." maxlength="30">
+        <button id="preset-save-btn" class="primary-btn">Save Current</button>
+      </div>
+      <div id="preset-list" class="preset-list"></div>
+    </section>
     <section id="tab-dev" class="tab-panel"></section>
   </main>
 
@@ -53,6 +106,9 @@
   <script src="js/ble.js"></script>
   <script src="js/colorwheel.js"></script>
   <script src="js/colors-tab.js"></script>
+  <script src="js/effects-tab.js"></script>
+  <script src="js/music-tab.js"></script>
+  <script src="js/presets-tab.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
