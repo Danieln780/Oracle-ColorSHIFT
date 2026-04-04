@@ -46,5 +46,20 @@ const BLE = {
 
   isConnected() {
     return this.device?.gatt?.connected ?? false;
+  },
+
+  // Placeholder protocol layer — update once BC2 GATT protocol is discovered
+  sendColor(zone, r, g, b, brightness) {
+    console.log(`[BLE] Color -> ${zone}: rgb(${r},${g},${b}) @ ${brightness}%`);
+    // Once protocol is known:
+    // const cmd = buildColorCommand(zone, r, g, b, brightness);
+    // this.write(KNOWN_CHAR_UUID, cmd);
+  },
+
+  sendEffect(type, params) {
+    console.log(`[BLE] Effect -> ${type}:`, params);
+    // Once protocol is known:
+    // const cmd = buildEffectCommand(type, params);
+    // this.write(KNOWN_CHAR_UUID, cmd);
   }
 };

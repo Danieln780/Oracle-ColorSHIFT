@@ -248,10 +248,9 @@ const EffectsTab = {
   },
 
   _sendEffect() {
-    if (typeof BLE !== 'undefined' && BLE.connected) {
+    if (typeof BLE !== 'undefined' && BLE.sendEffect && BLE.isConnected()) {
       const data = this._modeData[this.activeMode];
-      const payload = JSON.stringify({ effect: this.activeMode, ...data });
-      BLE.send(payload).catch(err => console.warn('BLE send error:', err));
+      BLE.sendEffect(this.activeMode, data);
     }
   },
 
