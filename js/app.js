@@ -7,3 +7,19 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
   });
 });
+
+document.getElementById('ble-connect-btn').addEventListener('click', async () => {
+  try {
+    const status = document.getElementById('ble-status');
+    status.textContent = 'Scanning...';
+    status.className = 'status scanning';
+    await BLE.connect();
+    status.textContent = `Connected: ${BLE.device.name}`;
+    status.className = 'status connected';
+  } catch (err) {
+    const status = document.getElementById('ble-status');
+    status.textContent = 'Failed';
+    status.className = 'status disconnected';
+    console.error('BLE connect error:', err);
+  }
+});
