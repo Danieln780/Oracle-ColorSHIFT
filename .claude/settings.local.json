@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:www.oraclelights.com)",
+      "WebFetch(domain:apps.apple.com)",
+      "WebFetch(domain:play.google.com)",
+      "Bash(npx --version)",
+      "Bash(node -e \":*)",
+      "mcp__Claude_Preview__preview_start",
+      "WebFetch(domain:claude.ai)"
+    ]
+  }
+}
