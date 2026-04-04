@@ -8,6 +8,21 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
+// Power on/off
+const powerBtn = document.getElementById('power-btn');
+let powerState = false;
+
+powerBtn.addEventListener('click', () => {
+  powerState = !powerState;
+  powerBtn.classList.toggle('on', powerState);
+  powerBtn.classList.toggle('off', !powerState);
+  if (powerState) {
+    BLE.sendPower(true);
+  } else {
+    BLE.sendPower(false);
+  }
+});
+
 document.getElementById('ble-connect-btn').addEventListener('click', async () => {
   try {
     const status = document.getElementById('ble-status');

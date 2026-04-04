@@ -202,6 +202,109 @@ const EffectsTab = {
     }
   },
 
+    rainbow: {
+      label: 'Rainbow',
+      icon: 'R',
+      defaults: { speed: 3, style: 'smooth' },
+      renderControls() {
+        const data = EffectsTab._getModeData('rainbow', { speed: this.defaults.speed, style: this.defaults.style });
+        let html = '<div class="effect-control-group">';
+        html += '<label class="effect-control-label">Style</label>';
+        html += '<div class="direction-toggle">';
+        ['smooth', 'stepped', 'sparkle'].forEach(s => {
+          html += `<button class="direction-btn ${data.style === s ? 'active' : ''}" data-style="${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</button>`;
+        });
+        html += '</div>';
+        html += '<div class="slider-row" style="margin-top:12px">';
+        html += '<label>Speed</label>';
+        html += `<input type="range" id="rainbow-speed" min="1" max="10" step="1" value="${data.speed}">`;
+        html += `<span id="rainbow-speed-val">${data.speed}s</span>`;
+        html += '</div>';
+        html += '<div class="rainbow-preview-bar"></div>';
+        html += '</div>';
+        return html;
+      },
+      bindEvents() {
+        const data = EffectsTab._getModeData('rainbow');
+        document.getElementById('rainbow-speed')?.addEventListener('input', (e) => {
+          data.speed = parseInt(e.target.value);
+          document.getElementById('rainbow-speed-val').textContent = data.speed + 's';
+          EffectsTab._sendEffect();
+        });
+        document.querySelectorAll('#effect-controls .direction-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            data.style = e.target.dataset.style;
+            document.querySelectorAll('#effect-controls .direction-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            EffectsTab._sendEffect();
+          });
+        });
+      }
+    },
+    phase: {
+      label: 'Phase',
+      icon: '\u21C4',
+      defaults: { speed: 3, colors: ['#ff0000', '#00ff00', '#0000ff'], offset: 120 },
+      renderControls() {
+        const data = EffectsTab._getModeData('phase', { speed: this.defaults.speed, colors: [...this.defaults.colors], offset: this.defaults.offset });
+        let html = '<div class="effect-control-group">';
+        html += '<label class="effect-control-label">Phase Colors</label>';
+        html += '<div id="phase-color-list">';
+        data.colors.forEach((c, i) => {
+          html += `<div class="color-list-item">
+            <input type="color" value="${c}" data-index="${i}" class="phase-color-input">
+            <span class="color-hex">${c}</span>
+            ${data.colors.length > 2 ? `<button class="remove-color-btn" data-index="${i}">&times;</button>` : ''}
+          </div>`;
+        });
+        html += '</div>';
+        html += '<button class="add-color-btn" id="phase-add-color">+ Add Color</button>';
+        html += '<div class="slider-row" style="margin-top:12px">';
+        html += '<label>Speed</label>';
+        html += `<input type="range" id="phase-speed" min="1" max="10" step="1" value="${data.speed}">`;
+        html += `<span id="phase-speed-val">${data.speed}s</span>`;
+        html += '</div>';
+        html += '<div class="slider-row">';
+        html += '<label>Phase Offset</label>';
+        html += `<input type="range" id="phase-offset" min="30" max="180" step="15" value="${data.offset}">`;
+        html += `<span id="phase-offset-val">${data.offset}&deg;</span>`;
+        html += '</div>';
+        html += '</div>';
+        return html;
+      },
+      bindEvents() {
+        const data = EffectsTab._getModeData('phase');
+        document.querySelectorAll('.phase-color-input').forEach(input => {
+          input.addEventListener('input', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            data.colors[idx] = e.target.value;
+            e.target.nextElementSibling.textContent = e.target.value;
+          });
+        });
+        document.querySelectorAll('#phase-color-list .remove-color-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            data.colors.splice(parseInt(e.target.dataset.index), 1);
+            EffectsTab._refreshControls();
+          });
+        });
+        document.getElementById('phase-add-color')?.addEventListener('click', () => {
+          data.colors.push('#ffffff');
+          EffectsTab._refreshControls();
+        });
+        document.getElementById('phase-speed')?.addEventListener('input', (e) => {
+          data.speed = parseInt(e.target.value);
+          document.getElementById('phase-speed-val').textContent = data.speed + 's';
+          EffectsTab._sendEffect();
+        });
+        document.getElementById('phase-offset')?.addEventListener('input', (e) => {
+          data.offset = parseInt(e.target.value);
+          document.getElementById('phase-offset-val').textContent = data.offset + '\u00B0';
+          EffectsTab._sendEffect();
+        });
+      }
+    }
+  },
+
   // Store per-mode user data so changes persist when switching modes
   _modeData: {},
 

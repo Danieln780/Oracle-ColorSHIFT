@@ -90,14 +90,31 @@ const BLE = {
     }
   },
 
+  // Power on/off: send black (off) or restore last color (on)
+  sendPower(on) {
+    if (on) {
+      // Send white at full brightness as a "power on" default
+      const cmd = this.buildColorCommand(255, 255, 255);
+      console.log('[BLE] Power ON');
+      if (this.isConnected() && this.writeChar) this.sendRaw(cmd);
+    } else {
+      // Send all zeros to turn off
+      const cmd = this.buildColorCommand(0, 0, 0);
+      console.log('[BLE] Power OFF');
+      if (this.isConnected() && this.writeChar) this.sendRaw(cmd);
+    }
+  },
+
   // Send effect command — mode byte varies by effect type
   sendEffect(type, params) {
     // Effect mode commands use: 0xBB [mode_byte] [speed] 0x44
     const modeMap = {
       fade: 0x25,
-      strobe: 0x30,
+      pulse: 0x26,
       chase: 0x28,
-      pulse: 0x26
+      strobe: 0x30,
+      rainbow: 0x25,    // rainbow uses fade mode with full spectrum
+      phase: 0x27       // phase shift pattern
     };
     const mode = modeMap[type] || 0x25;
     const speed = params?.speed || 0x03;

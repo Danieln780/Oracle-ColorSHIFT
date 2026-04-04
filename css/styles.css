@@ -34,6 +34,70 @@ h1 {
   color: #ff6b00;
 }
 
+/* Header controls group */
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Power button */
+.power-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #333;
+  background: #1a1a24;
+  color: #666;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.power-btn.on {
+  border-color: #00ff88;
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.1);
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
+}
+
+.power-btn.off {
+  border-color: #444;
+  color: #666;
+}
+
+.power-btn:active {
+  transform: scale(0.9);
+}
+
+/* Rainbow icon gradient */
+.rainbow-icon {
+  background: linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #8800ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: bold;
+}
+
+/* Rainbow preview bar */
+.rainbow-preview-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #00ff00, #00ffff, #0088ff, #8800ff, #ff0000);
+  margin-top: 12px;
+  background-size: 200% 100%;
+  animation: rainbowScroll 3s linear infinite;
+}
+
+@keyframes rainbowScroll {
+  0% { background-position: 0% 0; }
+  100% { background-position: 200% 0; }
+}
+
 .connect-btn {
   background: #ff6b00;
   color: #0a0a0f;

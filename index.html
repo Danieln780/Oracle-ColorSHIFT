@@ -12,7 +12,10 @@
 <body>
   <header id="header">
     <h1>Oculus LED</h1>
-    <button id="ble-connect-btn" class="connect-btn">Connect</button>
+    <div class="header-controls">
+      <button id="power-btn" class="power-btn off" title="Power On/Off">&#x23FB;</button>
+      <button id="ble-connect-btn" class="connect-btn">Connect</button>
+    </div>
     <span id="ble-status" class="status disconnected">Disconnected</span>
   </header>
 
@@ -54,6 +57,14 @@
         <button class="effect-card" data-mode="pulse">
           <span class="effect-icon">O</span>
           <span class="effect-label">Pulse</span>
+        </button>
+        <button class="effect-card" data-mode="rainbow">
+          <span class="effect-icon rainbow-icon">R</span>
+          <span class="effect-label">Rainbow</span>
+        </button>
+        <button class="effect-card" data-mode="phase">
+          <span class="effect-icon">&#x21C4;</span>
+          <span class="effect-label">Phase</span>
         </button>
       </div>
       <div id="effect-controls" class="effect-controls"></div>

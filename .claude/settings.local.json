@@ -8,7 +8,8 @@
       "Bash(npx --version)",
       "Bash(node -e \":*)",
       "mcp__Claude_Preview__preview_start",
-      "WebFetch(domain:claude.ai)"
+      "WebFetch(domain:claude.ai)",
+      "Bash(gh api:*)"
     ]
   }
 }
