@@ -16,26 +16,75 @@ const BLE = {
   // These are the known names these controllers broadcast as
   DEVICE_FILTERS: ['Oracle', 'ELK', 'LEDBLE', 'LEDnet', 'Triones', 'LEDBlue', 'QHM', 'BC', 'MELK', 'Dream'],
 
-  async connect() {
-    // Try specific name filters first, fall back to accepting all devices
-    let device;
-    const optServices = [this.SERVICE_UUID, this.NOTIFY_SERVICE_UUID];
-    try {
-      device = await navigator.bluetooth.requestDevice({
-        filters: this.DEVICE_FILTERS.map(name => ({ namePrefix: name })),
-        optionalServices: optServices
-      });
-    } catch (err) {
-      // If no matching device found with filters, let user pick any device
-      if (err.name === 'NotFoundError') {
-        device = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: optServices
-        });
-      } else {
-        throw err;
+  // Try to reconnect to a previously paired device without the picker
+  async autoReconnect() {
+    if (!navigator.bluetooth.getDevices) return false;
+    const devices = await navigator.bluetooth.getDevices();
+    for (const device of devices) {
+      if (device.name && device.name.startsWith('Oracle')) {
+        console.log('[BLE] Found previously paired device:', device.name);
+        this.device = device;
+        device.addEventListener('gattserverdisconnected', () => this.onDisconnect());
+        const abortCtrl = new AbortController();
+        // Listen for the device to appear nearby
+        await device.watchAdvertisements({ signal: abortCtrl.signal }).catch(() => {});
+        try {
+          this.server = await device.gatt.connect();
+          abortCtrl.abort();
+          await this.discoverServices();
+          return true;
+        } catch (e) {
+          abortCtrl.abort();
+          console.log('[BLE] Auto-reconnect failed, will use picker');
+        }
       }
     }
+    return false;
+  },
+
+  async connect(mode) {
+    // mode: 'auto' = try reconnect first, 'scan' = open picker with all devices, 'filtered' = name filter
+    const optServices = [this.SERVICE_UUID, this.NOTIFY_SERVICE_UUID];
+
+    // Try auto-reconnect to known device first
+    if (mode !== 'scan') {
+      try {
+        const reconnected = await this.autoReconnect();
+        if (reconnected) return this.device;
+      } catch (e) {
+        console.log('[BLE] Auto-reconnect not supported or failed');
+      }
+    }
+
+    let device;
+    if (mode === 'scan') {
+      // Accept all devices — shows everything nearby
+      device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: optServices
+      });
+    } else {
+      // Try name filters, fall back to accept all
+      try {
+        device = await navigator.bluetooth.requestDevice({
+          filters: [
+            ...this.DEVICE_FILTERS.map(name => ({ namePrefix: name })),
+            { services: [this.SERVICE_UUID] }
+          ],
+          optionalServices: optServices
+        });
+      } catch (err) {
+        if (err.name === 'NotFoundError') {
+          device = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: optServices
+          });
+        } else {
+          throw err;
+        }
+      }
+    }
+
     this.device = device;
     device.addEventListener('gattserverdisconnected', () => this.onDisconnect());
     this.server = await device.gatt.connect();

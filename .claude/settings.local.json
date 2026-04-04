@@ -9,7 +9,9 @@
       "Bash(node -e \":*)",
       "mcp__Claude_Preview__preview_start",
       "WebFetch(domain:claude.ai)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "WebFetch(domain:oracle-customer-help-center.document360.io)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

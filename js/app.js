@@ -23,18 +23,24 @@ powerBtn.addEventListener('click', () => {
   }
 });
 
-document.getElementById('ble-connect-btn').addEventListener('click', async () => {
+// Shared connect handler
+async function bleConnect(mode) {
+  const status = document.getElementById('ble-status');
   try {
-    const status = document.getElementById('ble-status');
-    status.textContent = 'Scanning...';
+    status.textContent = mode === 'scan' ? 'Scanning all...' : 'Connecting...';
     status.className = 'status scanning';
-    await BLE.connect();
-    status.textContent = `Connected: ${BLE.device.name}`;
+    await BLE.connect(mode);
+    status.textContent = `Connected: ${BLE.device.name || 'Unknown'}`;
     status.className = 'status connected';
   } catch (err) {
-    const status = document.getElementById('ble-status');
-    status.textContent = 'Failed';
+    status.textContent = err.name === 'NotFoundError' ? 'No device found' : 'Failed';
     status.className = 'status disconnected';
     console.error('BLE connect error:', err);
   }
-});
+}
+
+// Connect — tries auto-reconnect first, then filtered picker
+document.getElementById('ble-connect-btn').addEventListener('click', () => bleConnect('auto'));
+
+// Scan — opens picker showing ALL nearby BLE devices (no name filter)
+document.getElementById('ble-scan-btn').addEventListener('click', () => bleConnect('scan'));
