@@ -126,3 +126,134 @@ h1 {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
+
+/* Zone Selector */
+.zone-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  justify-content: center;
+}
+
+.zone-btn {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid #333;
+  background: transparent;
+  color: #888;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.zone-btn.active {
+  border-color: #ff6b00;
+  color: #ff6b00;
+  background: rgba(255, 107, 0, 0.1);
+}
+
+/* Color Wheel */
+.wheel-container {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+#color-wheel {
+  border-radius: 50%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* Color Input Row */
+.color-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.color-preview {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #333;
+  display: inline-block;
+}
+
+#hex-input {
+  background: #1a1a24;
+  border: 1px solid #333;
+  color: #e0e0e0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: monospace;
+  width: 100px;
+  text-align: center;
+}
+
+/* Slider Row */
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px;
+  margin-bottom: 16px;
+}
+
+.slider-row label {
+  font-size: 13px;
+  color: #888;
+  min-width: 70px;
+}
+
+.slider-row input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 4px;
+  background: #333;
+  border-radius: 2px;
+  outline: none;
+}
+
+.slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ff6b00;
+  cursor: pointer;
+}
+
+.slider-row span {
+  font-size: 13px;
+  color: #888;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* Quick Colors */
+.quick-colors {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+
+.quick-color-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #333;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.quick-color-btn:hover,
+.quick-color-btn:active {
+  transform: scale(1.15);
+  border-color: #fff;
+}

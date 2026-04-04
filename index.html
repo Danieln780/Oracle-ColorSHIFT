@@ -16,7 +16,26 @@
   </header>
 
   <main id="tab-content">
-    <section id="tab-colors" class="tab-panel active"></section>
+    <section id="tab-colors" class="tab-panel active">
+      <div class="zone-selector">
+        <button class="zone-btn active" data-zone="outer">Outer Halo</button>
+        <button class="zone-btn active" data-zone="inner">Inner Halo</button>
+        <button class="zone-btn active" data-zone="demon">Demon Eye</button>
+      </div>
+      <div class="wheel-container">
+        <canvas id="color-wheel" width="280" height="280"></canvas>
+      </div>
+      <div class="color-input-row">
+        <span class="color-preview" id="color-preview"></span>
+        <input type="text" id="hex-input" value="#FF6B00" maxlength="7">
+      </div>
+      <div class="slider-row">
+        <label>Brightness</label>
+        <input type="range" id="brightness-slider" min="0" max="100" value="100">
+        <span id="brightness-value">100%</span>
+      </div>
+      <div class="quick-colors" id="quick-colors"></div>
+    </section>
     <section id="tab-effects" class="tab-panel"></section>
     <section id="tab-music" class="tab-panel"></section>
     <section id="tab-presets" class="tab-panel"></section>
@@ -32,6 +51,8 @@
   </nav>
 
   <script src="js/ble.js"></script>
+  <script src="js/colorwheel.js"></script>
+  <script src="js/colors-tab.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
