@@ -3,16 +3,35 @@ const BLE = {
   server: null,
   services: [],
   characteristics: new Map(),
-  writeChar: null, // cached writable characteristic
+  writeChar: null,
 
-  // Oracle BC1/BC2 device name patterns
-  DEVICE_FILTERS: ['LEDnet', 'QHM', 'BC1', 'BC2'],
+  // Known service/characteristic UUIDs for generic BLE LED controllers
+  SERVICE_UUID: '0000fff0-0000-1000-8000-00805f9b34fb',
+  CHAR_UUID: '0000fff3-0000-1000-8000-00805f9b34fb',
+
+  // Device name prefixes — Oracle BC2 uses generic BLE LED chipset
+  // These are the known names these controllers broadcast as
+  DEVICE_FILTERS: ['ELK', 'LEDBLE', 'LEDnet', 'Triones', 'LEDBlue', 'QHM', 'BC', 'MELK', 'Dream'],
 
   async connect() {
-    const device = await navigator.bluetooth.requestDevice({
-      filters: this.DEVICE_FILTERS.map(name => ({ namePrefix: name })),
-      optionalServices: [] // accept all discovered services
-    });
+    // Try specific name filters first, fall back to accepting all devices
+    let device;
+    try {
+      device = await navigator.bluetooth.requestDevice({
+        filters: this.DEVICE_FILTERS.map(name => ({ namePrefix: name })),
+        optionalServices: [this.SERVICE_UUID]
+      });
+    } catch (err) {
+      // If no matching device found with filters, let user pick any device
+      if (err.name === 'NotFoundError') {
+        device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [this.SERVICE_UUID]
+        });
+      } else {
+        throw err;
+      }
+    }
     this.device = device;
     device.addEventListener('gattserverdisconnected', () => this.onDisconnect());
     this.server = await device.gatt.connect();
@@ -21,18 +40,48 @@ const BLE = {
   },
 
   async discoverServices() {
-    const services = await this.server.getPrimaryServices();
-    this.services = services;
     this.writeChar = null;
-    for (const service of services) {
-      const chars = await service.getCharacteristics();
-      for (const char of chars) {
+    this.characteristics.clear();
+    this.services = [];
+
+    // Try the known service UUID first
+    try {
+      const service = await this.server.getPrimaryService(this.SERVICE_UUID);
+      this.services = [service];
+      try {
+        const char = await service.getCharacteristic(this.CHAR_UUID);
+        this.writeChar = char;
         this.characteristics.set(char.uuid, char);
-        // Cache first writable characteristic for sending commands
-        if (!this.writeChar && (char.properties.write || char.properties.writeWithoutResponse)) {
-          this.writeChar = char;
+        console.log('[BLE] Found known LED characteristic:', this.CHAR_UUID);
+      } catch (e) {
+        // Known char not found, enumerate all
+        const chars = await service.getCharacteristics();
+        for (const char of chars) {
+          this.characteristics.set(char.uuid, char);
+          if (!this.writeChar && (char.properties.write || char.properties.writeWithoutResponse)) {
+            this.writeChar = char;
+          }
         }
       }
+    } catch (e) {
+      // Known service not found, enumerate all services
+      console.log('[BLE] Known service not found, discovering all...');
+      const services = await this.server.getPrimaryServices();
+      this.services = services;
+      for (const service of services) {
+        const chars = await service.getCharacteristics();
+        for (const char of chars) {
+          this.characteristics.set(char.uuid, char);
+          if (!this.writeChar && (char.properties.write || char.properties.writeWithoutResponse)) {
+            this.writeChar = char;
+          }
+        }
+      }
+    }
+
+    console.log(`[BLE] Discovered ${this.services.length} services, ${this.characteristics.size} characteristics`);
+    if (this.writeChar) {
+      console.log('[BLE] Write characteristic:', this.writeChar.uuid);
     }
   },
 
@@ -53,7 +102,6 @@ const BLE = {
     return await char.readValue();
   },
 
-  // Send raw bytes to the cached write characteristic
   async sendRaw(data) {
     if (!this.writeChar) {
       console.warn('[BLE] No writable characteristic found');
@@ -71,58 +119,61 @@ const BLE = {
     }
   },
 
-  // Oracle BC1/BC2 protocol: 0x56 RR GG BB 0x00 0xF0 0xAA
-  // Note: SK6812 uses GRB color order, but the controller handles reordering
-  buildColorCommand(r, g, b) {
-    return [0x56, r, g, b, 0x00, 0xF0, 0xAA];
+  // ======= Protocol: 9-byte packets =======
+  // Format: 0x7E 0x00 [CMD] [SUB] [ARG1] [ARG2] [ARG3] 0x00 0xEF
+
+  // Power on/off
+  sendPower(on) {
+    const cmd = on
+      ? [0x7E, 0x00, 0x04, 0x01, 0x00, 0x00, 0x00, 0x00, 0xEF]
+      : [0x7E, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0xEF];
+    console.log(`[BLE] Power ${on ? 'ON' : 'OFF'}`);
+    this.sendRaw(cmd);
   },
 
-  // Send color to controller — applies brightness as scaling
+  // Set RGB color: 7E 00 05 03 RR GG BB 00 EF
   sendColor(zone, r, g, b, brightness) {
     const scale = (brightness || 100) / 100;
-    const sr = Math.round(r * scale);
-    const sg = Math.round(g * scale);
-    const sb = Math.round(b * scale);
-    const cmd = this.buildColorCommand(sr, sg, sb);
-    console.log(`[BLE] Color -> ${zone}: rgb(${sr},${sg},${sb}) cmd=[${cmd.map(x => '0x' + x.toString(16).padStart(2, '0')).join(', ')}]`);
-    if (this.isConnected() && this.writeChar) {
-      this.sendRaw(cmd);
-    }
+    const sr = Math.min(255, Math.round(r * scale));
+    const sg = Math.min(255, Math.round(g * scale));
+    const sb = Math.min(255, Math.round(b * scale));
+    const cmd = [0x7E, 0x00, 0x05, 0x03, sr, sg, sb, 0x00, 0xEF];
+    console.log(`[BLE] Color -> ${zone}: rgb(${sr},${sg},${sb}) cmd=[${cmd.map(x => '0x' + x.toString(16).padStart(2, '0')).join(' ')}]`);
+    this.sendRaw(cmd);
   },
 
-  // Power on/off: send black (off) or restore last color (on)
-  sendPower(on) {
-    if (on) {
-      // Send white at full brightness as a "power on" default
-      const cmd = this.buildColorCommand(255, 255, 255);
-      console.log('[BLE] Power ON');
-      if (this.isConnected() && this.writeChar) this.sendRaw(cmd);
-    } else {
-      // Send all zeros to turn off
-      const cmd = this.buildColorCommand(0, 0, 0);
-      console.log('[BLE] Power OFF');
-      if (this.isConnected() && this.writeChar) this.sendRaw(cmd);
-    }
+  // Set brightness: 7E 00 01 [0-100] 00 00 00 00 EF
+  sendBrightness(level) {
+    const val = Math.max(0, Math.min(100, Math.round(level)));
+    const cmd = [0x7E, 0x00, 0x01, val, 0x00, 0x00, 0x00, 0x00, 0xEF];
+    console.log(`[BLE] Brightness -> ${val}%`);
+    this.sendRaw(cmd);
   },
 
-  // Send effect command — mode byte varies by effect type
+  // Set effect speed: 7E 00 02 [0-100] 00 00 00 00 EF
+  sendSpeed(speed) {
+    const val = Math.max(0, Math.min(100, Math.round(speed)));
+    const cmd = [0x7E, 0x00, 0x02, val, 0x00, 0x00, 0x00, 0x00, 0xEF];
+    console.log(`[BLE] Speed -> ${val}`);
+    this.sendRaw(cmd);
+  },
+
+  // Set effect mode: 7E 00 03 [mode] [speed] 00 00 00 EF
   sendEffect(type, params) {
-    // Effect mode commands use: 0xBB [mode_byte] [speed] 0x44
+    // Mode byte mapping for built-in effects
     const modeMap = {
       fade: 0x25,
       pulse: 0x26,
+      phase: 0x27,
       chase: 0x28,
       strobe: 0x30,
-      rainbow: 0x25,    // rainbow uses fade mode with full spectrum
-      phase: 0x27       // phase shift pattern
+      rainbow: 0x25  // rainbow = multi-color fade
     };
     const mode = modeMap[type] || 0x25;
-    const speed = params?.speed || 0x03;
-    const cmd = [0xBB, mode, speed, 0x44];
-    console.log(`[BLE] Effect -> ${type}: cmd=[${cmd.map(x => '0x' + x.toString(16).padStart(2, '0')).join(', ')}]`);
-    if (this.isConnected() && this.writeChar) {
-      this.sendRaw(cmd);
-    }
+    const speed = params?.speed ? Math.min(100, Math.round(params.speed * 10)) : 50;
+    const cmd = [0x7E, 0x00, 0x03, mode, speed, 0x00, 0x00, 0x00, 0xEF];
+    console.log(`[BLE] Effect -> ${type} (mode 0x${mode.toString(16)}, speed ${speed})`);
+    this.sendRaw(cmd);
   },
 
   onDisconnect() {
