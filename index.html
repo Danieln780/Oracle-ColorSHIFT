@@ -92,7 +92,29 @@
       </div>
       <div id="preset-list" class="preset-list"></div>
     </section>
-    <section id="tab-dev" class="tab-panel"></section>
+    <section id="tab-dev" class="tab-panel">
+      <div class="dev-section">
+        <h3>Services <button id="dev-refresh-btn" class="dev-small-btn">Refresh</button></h3>
+        <div id="service-tree" class="service-tree">
+          <p class="dev-hint">Connect to a device first</p>
+        </div>
+      </div>
+      <div class="dev-section">
+        <h3>Raw Command</h3>
+        <select id="char-select" class="dev-select">
+          <option value="">Select characteristic...</option>
+        </select>
+        <div class="raw-cmd-row">
+          <input type="text" id="raw-hex-input" placeholder="FF 6B 00" class="dev-input">
+          <button id="dev-write-btn" class="primary-btn">Write</button>
+          <button id="dev-read-btn" class="secondary-btn">Read</button>
+        </div>
+      </div>
+      <div class="dev-section">
+        <h3>Event Log <button id="dev-clear-log-btn" class="dev-small-btn">Clear</button></h3>
+        <div id="dev-log" class="dev-log"></div>
+      </div>
+    </section>
   </main>
 
   <nav id="tab-bar">
@@ -109,6 +131,7 @@
   <script src="js/effects-tab.js"></script>
   <script src="js/music-tab.js"></script>
   <script src="js/presets-tab.js"></script>
+  <script src="js/dev-tab.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
