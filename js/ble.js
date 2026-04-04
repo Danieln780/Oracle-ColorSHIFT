@@ -11,7 +11,7 @@ const BLE = {
 
   // Device name prefixes — Oracle BC2 uses generic BLE LED chipset
   // These are the known names these controllers broadcast as
-  DEVICE_FILTERS: ['ELK', 'LEDBLE', 'LEDnet', 'Triones', 'LEDBlue', 'QHM', 'BC', 'MELK', 'Dream'],
+  DEVICE_FILTERS: ['Oracle', 'ELK', 'LEDBLE', 'LEDnet', 'Triones', 'LEDBlue', 'QHM', 'BC', 'MELK', 'Dream'],
 
   async connect() {
     // Try specific name filters first, fall back to accepting all devices
