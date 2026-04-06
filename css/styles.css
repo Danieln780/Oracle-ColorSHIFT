@@ -858,3 +858,67 @@ h1 {
   background: #333;
   border-radius: 2px;
 }
+
+/* Device Finder */
+.finder-card {
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 10px;
+}
+
+.finder-card.probing {
+  background: #1a1a24;
+  border: 1px solid #ff6b00;
+}
+
+.finder-card.found {
+  background: #0a1a0f;
+  border: 2px solid #00ff88;
+}
+
+.finder-card.not-oracle {
+  background: #1a0a0a;
+  border: 1px solid #ff4444;
+}
+
+.finder-card.error {
+  background: #1a1a24;
+  border: 1px solid #666;
+}
+
+.finder-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.finder-card.found .finder-name {
+  color: #00ff88;
+}
+
+.finder-card.not-oracle .finder-name {
+  color: #ff4444;
+}
+
+.finder-id {
+  font-family: monospace;
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 8px;
+  word-break: break-all;
+}
+
+.finder-services {
+  font-family: monospace;
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+
+.finder-status {
+  font-size: 14px;
+  color: #e0e0e0;
+  margin-bottom: 10px;
+}

@@ -26,21 +26,48 @@ powerBtn.addEventListener('click', () => {
 // Shared connect handler
 async function bleConnect(mode) {
   const status = document.getElementById('ble-status');
+  const connectBtn = document.getElementById('ble-connect-btn');
+  const scanBtn = document.getElementById('ble-scan-btn');
   try {
-    status.textContent = mode === 'scan' ? 'Scanning all...' : 'Connecting...';
+    connectBtn.disabled = true;
+    scanBtn.disabled = true;
+    const labels = {
+      auto: 'Searching for Oracle...',
+      service: 'Finding FFD5 devices...',
+      scan: 'Showing all devices...'
+    };
+    status.textContent = labels[mode] || 'Connecting...';
     status.className = 'status scanning';
     await BLE.connect(mode);
-    status.textContent = `Connected: ${BLE.device.name || 'Unknown'}`;
+
+    const name = BLE.device.name || 'Unknown Device';
+    const hasFFD9 = BLE.writeChar?.uuid?.includes('ffd9');
+    status.textContent = `Connected: ${name}` + (hasFFD9 ? ' (FFD9 OK)' : '');
     status.className = 'status connected';
+
+    // Show result details
+    console.log('[App] Connected to:', name);
+    console.log('[App] Write char:', BLE.writeChar?.uuid || 'NONE');
+    console.log('[App] Services found:', BLE.services.length);
+    console.log('[App] Characteristics:', BLE.characteristics.size);
   } catch (err) {
-    status.textContent = err.name === 'NotFoundError' ? 'No device found' : 'Failed';
+    if (err.name === 'NotFoundError') {
+      status.textContent = 'No device found';
+    } else if (err.message?.includes('User cancelled')) {
+      status.textContent = 'Cancelled';
+    } else {
+      status.textContent = 'Failed: ' + (err.message || err);
+    }
     status.className = 'status disconnected';
     console.error('BLE connect error:', err);
+  } finally {
+    connectBtn.disabled = false;
+    scanBtn.disabled = false;
   }
 }
 
-// Connect — tries auto-reconnect first, then filtered picker
+// Connect — filters by FFD5 service UUID first (shows only LED controllers)
 document.getElementById('ble-connect-btn').addEventListener('click', () => bleConnect('auto'));
 
-// Scan — opens picker showing ALL nearby BLE devices (no name filter)
+// Scan — opens picker showing ALL nearby BLE devices (manual pick)
 document.getElementById('ble-scan-btn').addEventListener('click', () => bleConnect('scan'));

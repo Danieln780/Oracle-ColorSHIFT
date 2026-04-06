@@ -43,11 +43,11 @@ const BLE = {
   },
 
   async connect(mode) {
-    // mode: 'auto' = try reconnect first, 'scan' = open picker with all devices, 'filtered' = name filter
+    // mode: 'auto' = try reconnect first, 'scan' = all devices, 'service' = filter by FFD5 service
     const optServices = [this.SERVICE_UUID, this.NOTIFY_SERVICE_UUID];
 
     // Try auto-reconnect to known device first
-    if (mode !== 'scan') {
+    if (mode === 'auto') {
       try {
         const reconnected = await this.autoReconnect();
         if (reconnected) return this.device;
@@ -57,39 +57,57 @@ const BLE = {
     }
 
     let device;
-    if (mode === 'scan') {
-      // Accept all devices — shows everything nearby
+
+    // Strategy 1: Filter by service UUID — only shows devices with FFD5
+    // This is the most reliable way since Bluefy may not show device names
+    if (mode === 'auto' || mode === 'service') {
+      try {
+        device = await navigator.bluetooth.requestDevice({
+          filters: [{ services: [this.SERVICE_UUID] }],
+          optionalServices: [this.NOTIFY_SERVICE_UUID]
+        });
+      } catch (err) {
+        if (err.name !== 'NotFoundError') throw err;
+        console.log('[BLE] No devices with FFD5 service, trying name filters...');
+      }
+    }
+
+    // Strategy 2: Filter by name prefixes
+    if (!device && (mode === 'auto' || mode === 'name')) {
+      try {
+        device = await navigator.bluetooth.requestDevice({
+          filters: this.DEVICE_FILTERS.map(name => ({ namePrefix: name })),
+          optionalServices: optServices
+        });
+      } catch (err) {
+        if (err.name !== 'NotFoundError') throw err;
+        console.log('[BLE] No devices matched name filters');
+      }
+    }
+
+    // Strategy 3: Accept all devices — let user pick manually
+    if (!device || mode === 'scan') {
       device = await navigator.bluetooth.requestDevice({
         acceptAllDevices: true,
         optionalServices: optServices
       });
-    } else {
-      // Try name filters, fall back to accept all
-      try {
-        device = await navigator.bluetooth.requestDevice({
-          filters: [
-            ...this.DEVICE_FILTERS.map(name => ({ namePrefix: name })),
-            { services: [this.SERVICE_UUID] }
-          ],
-          optionalServices: optServices
-        });
-      } catch (err) {
-        if (err.name === 'NotFoundError') {
-          device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: optServices
-          });
-        } else {
-          throw err;
-        }
-      }
     }
 
     this.device = device;
     device.addEventListener('gattserverdisconnected', () => this.onDisconnect());
+    this._updateStatus('Connecting to GATT...');
     this.server = await device.gatt.connect();
+    this._updateStatus('Discovering services...');
     await this.discoverServices();
     return device;
+  },
+
+  _updateStatus(msg) {
+    const el = document.getElementById('ble-status');
+    if (el) {
+      el.textContent = msg;
+      el.className = 'status scanning';
+    }
   },
 
   async discoverServices() {
