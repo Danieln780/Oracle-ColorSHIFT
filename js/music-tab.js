@@ -108,11 +108,13 @@ const MusicTab = {
     });
 
     // Color program buttons
-    document.querySelectorAll('.program-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.program-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#tab-music .program-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('#tab-music .program-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         this.colorProgram = btn.dataset.program;
+        console.log('[Music] Color program:', this.colorProgram);
         // Show/hide custom color pickers
         const customRow = document.getElementById('custom-color-row');
         if (customRow) customRow.style.display = this.colorProgram === 'custom' ? 'flex' : 'none';
@@ -123,11 +125,13 @@ const MusicTab = {
     });
 
     // React mode buttons
-    document.querySelectorAll('.react-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.react-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#tab-music .react-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('#tab-music .react-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         this.reactMode = btn.dataset.react;
+        console.log('[Music] React mode:', this.reactMode);
       });
     });
 

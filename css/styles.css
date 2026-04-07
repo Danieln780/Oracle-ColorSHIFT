@@ -402,30 +402,31 @@ h1 {
   font-style: italic;
 }
 
-/* Effects speed row */
-.effect-speed-row {
+/* Effects controls bar */
+.effect-controls-bar {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
   padding: 10px;
   background: #111118;
   border-radius: 10px;
 }
 
-.effect-speed-row label {
-  font-size: 12px;
-  color: #888;
+.effect-slider-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.effect-speed-row input[type="range"] {
+.effect-slider-group input[type="range"] {
   flex: 1;
 }
 
-.effect-speed-row span {
-  font-size: 14px;
-  color: #ff6b00;
-  min-width: 20px;
+.slider-label {
+  font-size: 12px;
+  color: #888;
+  min-width: 30px;
   text-align: center;
 }
 

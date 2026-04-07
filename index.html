@@ -49,11 +49,18 @@
       <div class="quick-colors" id="quick-colors"></div>
     </section>
     <section id="tab-effects" class="tab-panel">
-      <div class="effect-speed-row">
-        <label>Fast</label>
-        <input type="range" id="effect-speed-slider" min="1" max="10" value="3">
-        <label>Slow</label>
-        <span id="effect-speed-val" style="display:none">3</span>
+      <div class="effect-controls-bar">
+        <div class="effect-slider-group">
+          <span class="slider-label">Fast</span>
+          <input type="range" id="effect-speed-slider" min="1" max="10" value="3">
+          <span class="slider-label">Slow</span>
+          <span id="effect-speed-val" style="display:none">3</span>
+        </div>
+        <div class="effect-slider-group">
+          <span class="slider-label">&#x2600;</span>
+          <input type="range" id="effect-brightness-slider" min="5" max="100" value="100">
+          <span id="effect-brightness-val" class="slider-label">100%</span>
+        </div>
       </div>
       <div class="effect-modes">
         <!-- Populated by EffectsTab.renderModes() -->

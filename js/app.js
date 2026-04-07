@@ -77,6 +77,22 @@ document.getElementById('effect-static-btn')?.addEventListener('click', () => {
   if (typeof EffectsTab !== 'undefined') EffectsTab.goStatic();
 });
 
+// Effects brightness slider — syncs with global brightness
+const effectBrightnessSlider = document.getElementById('effect-brightness-slider');
+const effectBrightnessVal = document.getElementById('effect-brightness-val');
+if (effectBrightnessSlider) {
+  effectBrightnessSlider.addEventListener('input', (e) => {
+    const level = parseInt(e.target.value);
+    effectBrightnessVal.textContent = level + '%';
+    BLE.globalBrightness = level;
+    // Sync the header brightness slider
+    const headerSlider = document.getElementById('global-brightness');
+    const headerVal = document.getElementById('global-brightness-val');
+    if (headerSlider) headerSlider.value = level;
+    if (headerVal) headerVal.textContent = level + '%';
+  });
+}
+
 // Global brightness slider
 const brightnessSlider = document.getElementById('global-brightness');
 const brightnessVal = document.getElementById('global-brightness-val');
@@ -85,12 +101,13 @@ if (brightnessSlider) {
     const level = parseInt(e.target.value);
     brightnessVal.textContent = level + '%';
     BLE.globalBrightness = level;
-    // If white mode, send white command; otherwise re-send via white intensity
-    if (level === 0) {
-      BLE.sendColor('all', 0, 0, 0, 100);
-    } else {
-      // Send white intensity command for pure brightness control
-      BLE.sendWhite(level);
+
+    // For solid colors: re-send current color at new brightness
+    if (typeof ColorsTab !== 'undefined' && ColorsTab.currentColor) {
+      const c = ColorsTab.currentColor;
+      BLE.sendColor('all', c.r, c.g, c.b, ColorsTab.brightness || 100);
     }
+    // Custom fades/strobes automatically pick up globalBrightness
+    // via BLE.sendColor's scaling on the next tick
   });
 }
