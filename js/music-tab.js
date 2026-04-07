@@ -4,6 +4,7 @@ const MusicTab = {
   stream: null,
   animFrame: null,
   wakeLock: null,
+  keepAliveInterval: null,
   isListening: false,
   sensitivity: 50,
   mode: 'balanced',
@@ -262,10 +263,42 @@ const MusicTab = {
       if ('wakeLock' in navigator) {
         this.wakeLock = await navigator.wakeLock.request('screen');
         console.log('[Music] Wake lock acquired — screen will stay on');
+        // Re-acquire wake lock if page becomes visible again (e.g. after switching apps)
+        document.addEventListener('visibilitychange', this._handleVisibility = async () => {
+          if (document.visibilityState === 'visible' && this.isListening && !this.wakeLock) {
+            try {
+              this.wakeLock = await navigator.wakeLock.request('screen');
+              console.log('[Music] Wake lock re-acquired');
+            } catch (e) {}
+          }
+        });
       }
     } catch (e) {
       console.log('[Music] Wake lock not available:', e.message);
     }
+
+    // Keep-alive: play silent audio to prevent browser from suspending in background
+    // This works on Android Chrome — iOS will still suspend
+    try {
+      const silentOsc = this.audioCtx.createOscillator();
+      const silentGain = this.audioCtx.createGain();
+      silentGain.gain.value = 0.001; // nearly silent
+      silentOsc.connect(silentGain);
+      silentGain.connect(this.audioCtx.destination);
+      silentOsc.start();
+      this._silentOsc = silentOsc;
+      console.log('[Music] Background keep-alive started');
+    } catch (e) {
+      console.log('[Music] Keep-alive not available:', e.message);
+    }
+
+    // Also use setInterval as a backup to keep processing alive
+    this.keepAliveInterval = setInterval(() => {
+      if (this.isListening && this.audioCtx?.state === 'suspended') {
+        this.audioCtx.resume();
+        console.log('[Music] Resumed suspended AudioContext');
+      }
+    }, 1000);
 
     this.draw();
   },
@@ -285,6 +318,19 @@ const MusicTab = {
       this.wakeLock.release();
       this.wakeLock = null;
       console.log('[Music] Wake lock released');
+    }
+    if (this._handleVisibility) {
+      document.removeEventListener('visibilitychange', this._handleVisibility);
+    }
+
+    // Stop keep-alive
+    if (this._silentOsc) {
+      this._silentOsc.stop();
+      this._silentOsc = null;
+    }
+    if (this.keepAliveInterval) {
+      clearInterval(this.keepAliveInterval);
+      this.keepAliveInterval = null;
     }
   },
 
