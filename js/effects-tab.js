@@ -1,57 +1,49 @@
 const EffectsTab = {
   activeMode: null,
+  customFadeColors: ['#ff0000', '#0000ff'],
+  customFadeRunning: false,
+  customFadeTimer: null,
   sequencerSteps: [],
   previewInterval: null,
+  speed: 5, // 1(slow)-10(fast)
 
-  // All 20 Triones built-in modes grouped by category
+  // Triones built-in modes grouped by category
   modeGroups: [
     {
       label: 'Fades',
       modes: [
-        { code: 0x25, name: 'Rainbow Fade', icon: 'R', iconClass: 'rainbow-icon' },
+        { code: 0x25, name: 'Rainbow', icon: 'R', iconClass: 'rainbow-icon' },
         { code: 0x2D, name: 'Red/Green', icon: '~' },
         { code: 0x2E, name: 'Red/Blue', icon: '~' },
         { code: 0x2F, name: 'Green/Blue', icon: '~' }
       ]
     },
     {
-      label: 'Graduals',
-      modes: [
-        { code: 0x26, name: 'Red Pulse', icon: 'O', color: '#ff0000' },
-        { code: 0x27, name: 'Green Pulse', icon: 'O', color: '#00ff00' },
-        { code: 0x28, name: 'Blue Pulse', icon: 'O', color: '#0066ff' },
-        { code: 0x29, name: 'Yellow Pulse', icon: 'O', color: '#ffff00' },
-        { code: 0x2A, name: 'Cyan Pulse', icon: 'O', color: '#00ffff' },
-        { code: 0x2B, name: 'Purple Pulse', icon: 'O', color: '#aa00ff' },
-        { code: 0x2C, name: 'White Pulse', icon: 'O', color: '#ffffff' }
-      ]
-    },
-    {
       label: 'Strobes',
       modes: [
-        { code: 0x30, name: 'Rainbow Strobe', icon: '!', iconClass: 'rainbow-icon' },
-        { code: 0x31, name: 'Red Strobe', icon: '!', color: '#ff0000' },
-        { code: 0x32, name: 'Green Strobe', icon: '!', color: '#00ff00' },
-        { code: 0x33, name: 'Blue Strobe', icon: '!', color: '#0066ff' },
-        { code: 0x34, name: 'Yellow Strobe', icon: '!', color: '#ffff00' },
-        { code: 0x35, name: 'Cyan Strobe', icon: '!', color: '#00ffff' },
-        { code: 0x36, name: 'Purple Strobe', icon: '!', color: '#aa00ff' },
-        { code: 0x37, name: 'White Strobe', icon: '!', color: '#ffffff' }
+        { code: 0x30, name: 'Rainbow', icon: '!', iconClass: 'rainbow-icon' },
+        { code: 0x31, name: 'Red', icon: '!', color: '#ff0000' },
+        { code: 0x32, name: 'Green', icon: '!', color: '#00ff00' },
+        { code: 0x33, name: 'Blue', icon: '!', color: '#0066ff' },
+        { code: 0x34, name: 'Yellow', icon: '!', color: '#ffff00' },
+        { code: 0x35, name: 'Cyan', icon: '!', color: '#00ffff' },
+        { code: 0x36, name: 'Purple', icon: '!', color: '#aa00ff' },
+        { code: 0x37, name: 'White', icon: '!', color: '#ffffff' }
       ]
     },
     {
-      label: 'Jumps',
+      label: 'Other',
       modes: [
-        { code: 0x38, name: 'Rainbow Jump', icon: '>', iconClass: 'rainbow-icon' }
+        { code: 0x38, name: 'Jump', icon: '>', iconClass: 'rainbow-icon' },
+        { code: 0x2C, name: 'White Pulse', icon: 'O', color: '#ffffff' }
       ]
     }
   ],
 
-  speed: 5, // 1-10 slider value
-
   init() {
     this.renderModes();
     this.bindSpeedSlider();
+    this.bindCustomFade();
     this.bindSequencer();
   },
 
@@ -76,10 +68,10 @@ const EffectsTab = {
 
     container.innerHTML = html;
 
-    // Bind click events
     container.querySelectorAll('.effect-card').forEach(card => {
       card.addEventListener('click', () => {
         const mode = parseInt(card.dataset.mode);
+        this.stopCustomFade();
         this.selectMode(mode, card);
       });
     });
@@ -87,12 +79,10 @@ const EffectsTab = {
 
   selectMode(modeCode, cardElement) {
     this.activeMode = modeCode;
-
-    // Update card highlights
     document.querySelectorAll('.effect-card').forEach(c => c.classList.remove('active'));
     if (cardElement) cardElement.classList.add('active');
+    document.getElementById('custom-fade-btn')?.classList.remove('active');
 
-    // Send effect command immediately
     if (typeof BLE !== 'undefined' && BLE.sendEffect) {
       BLE.sendEffect(modeCode, { speed: this.speed });
     }
@@ -107,16 +97,141 @@ const EffectsTab = {
       this.speed = parseInt(e.target.value);
       label.textContent = this.speed;
 
-      // Re-send current effect at new speed
-      if (this.activeMode !== null && typeof BLE !== 'undefined' && BLE.sendEffect) {
+      // Re-send current effect at new speed, or update custom fade interval
+      if (this.customFadeRunning) {
+        this.stopCustomFade();
+        this.startCustomFade();
+      } else if (this.activeMode !== null && typeof BLE !== 'undefined' && BLE.sendEffect) {
         BLE.sendEffect(this.activeMode, { speed: this.speed });
       }
     });
   },
 
-  // Static color button — returns to solid color mode (exits effects)
+  // ======= Custom Color Fade =======
+  // User picks 2-3 colors, app smoothly fades between them by sending rapid color commands
+
+  bindCustomFade() {
+    document.getElementById('custom-fade-btn')?.addEventListener('click', () => {
+      if (this.customFadeRunning) {
+        this.stopCustomFade();
+      } else {
+        this.startCustomFade();
+      }
+    });
+
+    document.getElementById('cf-add-color')?.addEventListener('click', () => {
+      if (this.customFadeColors.length < 5) {
+        this.customFadeColors.push('#ffffff');
+        this.renderCustomFadeColors();
+      }
+    });
+
+    this.renderCustomFadeColors();
+  },
+
+  renderCustomFadeColors() {
+    const container = document.getElementById('cf-color-list');
+    if (!container) return;
+
+    container.innerHTML = this.customFadeColors.map((c, i) => {
+      const canRemove = this.customFadeColors.length > 2;
+      return `<div class="cf-color-item">
+        <input type="color" value="${c}" data-index="${i}" class="cf-color-input">
+        ${canRemove ? `<button class="cf-remove-btn" data-index="${i}">&times;</button>` : ''}
+      </div>`;
+    }).join('');
+
+    container.querySelectorAll('.cf-color-input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        this.customFadeColors[parseInt(e.target.dataset.index)] = e.target.value;
+        // Restart fade if running to pick up new colors
+        if (this.customFadeRunning) {
+          this.stopCustomFade();
+          this.startCustomFade();
+        }
+      });
+    });
+
+    container.querySelectorAll('.cf-remove-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        this.customFadeColors.splice(parseInt(e.target.dataset.index), 1);
+        this.renderCustomFadeColors();
+        if (this.customFadeRunning) {
+          this.stopCustomFade();
+          this.startCustomFade();
+        }
+      });
+    });
+  },
+
+  startCustomFade() {
+    if (this.customFadeColors.length < 2) return;
+
+    this.customFadeRunning = true;
+    this.activeMode = null;
+    document.querySelectorAll('.effect-card').forEach(c => c.classList.remove('active'));
+    const btn = document.getElementById('custom-fade-btn');
+    if (btn) {
+      btn.classList.add('active');
+      btn.textContent = 'Stop Fade';
+    }
+
+    const colors = this.customFadeColors.map(hex => ({
+      r: parseInt(hex.slice(1, 3), 16),
+      g: parseInt(hex.slice(3, 5), 16),
+      b: parseInt(hex.slice(5, 7), 16)
+    }));
+
+    // Speed 1-10: interval per step in ms
+    // Speed 1 = 100ms per step (slow), Speed 10 = 10ms per step (fast)
+    // Total fade time between colors = steps * interval
+    const steps = 50; // interpolation steps between each color pair
+    const interval = Math.max(10, Math.round(110 - (this.speed * 10))); // 10=100ms, 1=10ms
+    let step = 0;
+    const totalSteps = steps * colors.length;
+
+    const tick = () => {
+      const pairIndex = Math.floor(step / steps) % colors.length;
+      const nextIndex = (pairIndex + 1) % colors.length;
+      const t = (step % steps) / steps;
+
+      const c1 = colors[pairIndex];
+      const c2 = colors[nextIndex];
+      const r = Math.round(c1.r + (c2.r - c1.r) * t);
+      const g = Math.round(c1.g + (c2.g - c1.g) * t);
+      const b = Math.round(c1.b + (c2.b - c1.b) * t);
+
+      if (typeof BLE !== 'undefined' && BLE.sendColor) {
+        BLE.sendColor('all', r, g, b, 100);
+      }
+
+      // Update preview indicator
+      const indicator = document.getElementById('cf-preview');
+      if (indicator) {
+        indicator.style.backgroundColor = `rgb(${r},${g},${b})`;
+      }
+
+      step = (step + 1) % totalSteps;
+      this.customFadeTimer = setTimeout(tick, interval);
+    };
+
+    tick();
+  },
+
+  stopCustomFade() {
+    this.customFadeRunning = false;
+    clearTimeout(this.customFadeTimer);
+    this.customFadeTimer = null;
+    const btn = document.getElementById('custom-fade-btn');
+    if (btn) {
+      btn.classList.remove('active');
+      btn.textContent = 'Start Fade';
+    }
+  },
+
+  // Static color button
   goStatic() {
-    // Send current color to exit effect mode
+    this.stopCustomFade();
     if (typeof ColorsTab !== 'undefined' && ColorsTab.sendCurrentColor) {
       ColorsTab.sendCurrentColor();
     }
@@ -124,7 +239,7 @@ const EffectsTab = {
     document.querySelectorAll('.effect-card').forEach(c => c.classList.remove('active'));
   },
 
-  // Sequencer
+  // ======= Custom Sequencer =======
   bindSequencer() {
     document.getElementById('seq-add-btn')?.addEventListener('click', () => this.addStep());
     document.getElementById('seq-preview-btn')?.addEventListener('click', () => this.preview());
@@ -173,6 +288,7 @@ const EffectsTab = {
   preview() {
     if (this.previewInterval) this.stopPreview();
     if (this.sequencerSteps.length === 0) return;
+    this.stopCustomFade();
     let i = 0;
     const indicator = document.getElementById('seq-preview-indicator');
     const runStep = () => {
@@ -181,7 +297,6 @@ const EffectsTab = {
       const step = this.sequencerSteps[stepIndex];
       indicator.style.backgroundColor = step.color;
 
-      // Send color to BLE
       const hex = step.color;
       const r = parseInt(hex.slice(1, 3), 16);
       const g = parseInt(hex.slice(3, 5), 16);

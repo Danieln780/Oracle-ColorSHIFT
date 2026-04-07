@@ -288,11 +288,12 @@ const BLE = {
       };
       mode = modeMap[type] || 0x25;
     }
-    // Speed: slider 1-10 maps to 0x01(fast)-0xFF(slow)
-    // Default to medium speed
+    // Speed: slider 1(slow)-10(fast) maps to protocol 0xFF(slow)-0x01(fast)
+    // Invert: high slider value = low protocol value = faster
     let rawSpeed = 0x10;
     if (params?.speed) {
-      rawSpeed = Math.max(0x01, Math.min(0xFF, Math.round(params.speed * 25)));
+      // slider 1 -> 0xFF (slowest), slider 10 -> 0x01 (fastest)
+      rawSpeed = Math.max(0x01, Math.min(0xFF, Math.round(256 - (params.speed * 25.5))));
     }
     const cmd = [0xBB, mode, rawSpeed, 0x44];
     console.log(`[BLE] Effect -> mode 0x${mode.toString(16)} speed 0x${rawSpeed.toString(16)} -> [${cmd.map(x => x.toString(16).padStart(2, '0')).join(' ')}]`);
