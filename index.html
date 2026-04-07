@@ -69,14 +69,63 @@
         <div id="music-color-indicator" class="music-color-indicator"></div>
         <button id="music-start-btn" class="primary-btn">Start Listening</button>
       </div>
+
       <div class="slider-row">
         <label>Sensitivity</label>
         <input type="range" id="sensitivity-slider" min="1" max="100" value="50">
       </div>
+
+      <div class="music-section-label">Frequency Focus</div>
       <div class="music-modes">
         <button class="mode-btn active" data-mode="balanced">Balanced</button>
-        <button class="mode-btn" data-mode="bass">Bass Heavy</button>
-        <button class="mode-btn" data-mode="treble">Treble Heavy</button>
+        <button class="mode-btn" data-mode="bass">Bass</button>
+        <button class="mode-btn" data-mode="treble">Treble</button>
+      </div>
+
+      <div class="music-section-label">Color Program</div>
+      <div class="program-grid">
+        <button class="program-btn active" data-program="spectrum">
+          <span class="program-icon rainbow-icon">R</span>
+          <span>Spectrum</span>
+        </button>
+        <button class="program-btn" data-program="pulse">
+          <span class="program-icon">O</span>
+          <span>Pulse</span>
+        </button>
+        <button class="program-btn" data-program="party">
+          <span class="program-icon">P</span>
+          <span>Party</span>
+        </button>
+        <button class="program-btn" data-program="fire">
+          <span class="program-icon" style="color:#ff4400">F</span>
+          <span>Fire</span>
+        </button>
+        <button class="program-btn" data-program="ice">
+          <span class="program-icon" style="color:#00ccff">I</span>
+          <span>Ice</span>
+        </button>
+        <button class="program-btn" data-program="custom">
+          <span class="program-icon">C</span>
+          <span>Custom</span>
+        </button>
+      </div>
+
+      <div id="pulse-color-row" class="music-color-row" style="display:none">
+        <label>Pulse Color</label>
+        <input type="color" id="pulse-color" value="#ff6b00">
+      </div>
+      <div id="custom-color-row" class="music-color-row" style="display:none">
+        <label>Quiet</label>
+        <input type="color" id="custom-color-1" value="#ff0000">
+        <label>Loud</label>
+        <input type="color" id="custom-color-2" value="#0000ff">
+      </div>
+
+      <div class="music-section-label">React Style</div>
+      <div class="music-modes">
+        <button class="react-btn active" data-react="smooth">Smooth</button>
+        <button class="react-btn" data-react="snap">Snap</button>
+        <button class="react-btn" data-react="strobe">Beat Strobe</button>
       </div>
     </section>
     <section id="tab-presets" class="tab-panel">
