@@ -34,7 +34,8 @@ const MusicTab = {
         const r = parseInt(hex.slice(1, 3), 16);
         const g = parseInt(hex.slice(3, 5), 16);
         const b = parseInt(hex.slice(5, 7), 16);
-        const scale = vol / 255;
+        // Boost: minimum 10% glow, scale up aggressively with volume
+        const scale = Math.min(1, 0.1 + (vol / 120));
         return { r: Math.round(r * scale), g: Math.round(g * scale), b: Math.round(b * scale) };
       }
     },
@@ -52,24 +53,32 @@ const MusicTab = {
     },
     fire: {
       name: 'Fire',
-      desc: 'Red/orange/yellow, bass drives intensity',
+      desc: 'Red/orange/yellow, volume drives flames',
       compute(bass, mid, treble) {
-        const intensity = Math.min(255, bass * 1.2);
+        // Use all bands but weight bass heavier for fire feel
+        const vol = Math.min(255, (bass * 1.5 + mid * 0.8 + treble * 0.3) / 2);
+        const intensity = Math.min(255, 30 + vol * 1.5); // baseline glow + boost
+        // Flicker: orange shifts to yellow on loud, red on quiet
+        const greenShift = Math.min(180, vol * 0.7);
         return {
           r: Math.round(intensity),
-          g: Math.round(intensity * 0.35),
+          g: Math.round(greenShift),
           b: 0
         };
       }
     },
     ice: {
       name: 'Ice',
-      desc: 'Blue/cyan/white, treble drives intensity',
+      desc: 'Blue/cyan/white, volume drives shimmer',
       compute(bass, mid, treble) {
-        const intensity = Math.min(255, treble * 1.2);
+        // Use all bands but weight treble heavier
+        const vol = Math.min(255, (bass * 0.3 + mid * 0.8 + treble * 1.5) / 2);
+        const intensity = Math.min(255, 30 + vol * 1.5); // baseline glow + boost
+        // Shimmer: blue shifts to cyan/white on loud
+        const whiteShift = Math.min(200, vol * 0.6);
         return {
-          r: Math.round(intensity * 0.2),
-          g: Math.round(intensity * 0.6),
+          r: Math.round(whiteShift * 0.4),
+          g: Math.round(whiteShift),
           b: Math.round(intensity)
         };
       }
