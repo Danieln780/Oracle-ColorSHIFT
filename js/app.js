@@ -76,3 +76,21 @@ document.getElementById('ble-scan-btn').addEventListener('click', () => bleConne
 document.getElementById('effect-static-btn')?.addEventListener('click', () => {
   if (typeof EffectsTab !== 'undefined') EffectsTab.goStatic();
 });
+
+// Global brightness slider
+const brightnessSlider = document.getElementById('global-brightness');
+const brightnessVal = document.getElementById('global-brightness-val');
+if (brightnessSlider) {
+  brightnessSlider.addEventListener('input', (e) => {
+    const level = parseInt(e.target.value);
+    brightnessVal.textContent = level + '%';
+    BLE.globalBrightness = level;
+    // If white mode, send white command; otherwise re-send via white intensity
+    if (level === 0) {
+      BLE.sendColor('all', 0, 0, 0, 100);
+    } else {
+      // Send white intensity command for pure brightness control
+      BLE.sendWhite(level);
+    }
+  });
+}

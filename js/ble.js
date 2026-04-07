@@ -221,9 +221,12 @@ const BLE = {
     this.sendRaw(cmd);
   },
 
+  // Global brightness level (0-100), applied to all color sends
+  globalBrightness: 100,
+
   // Set RGB color: 56 RR GG BB 00 F0 AA
   sendColor(zone, r, g, b, brightness) {
-    const scale = (brightness || 100) / 100;
+    const scale = ((brightness || 100) / 100) * (this.globalBrightness / 100);
     const sr = Math.min(255, Math.round(r * scale));
     const sg = Math.min(255, Math.round(g * scale));
     const sb = Math.min(255, Math.round(b * scale));
@@ -288,13 +291,13 @@ const BLE = {
       };
       mode = modeMap[type] || 0x25;
     }
-    // Speed: slider 1(slow)-10(fast)
-    // Oracle BC2 appears to use: higher value = faster (opposite of Triones docs)
-    // Double speed range for more visible effect
-    let rawSpeed = 0x80;
+    // Speed: our slider is 1(fast) to 10(slow)
+    // Triones protocol: 0x01=fastest, 0xFF=slowest
+    // So slider maps directly: 1->0x01, 10->0xFF
+    let rawSpeed = 0x10;
     if (params?.speed) {
-      // slider 1 -> 0x02 (slowest), slider 10 -> 0xFF (fastest)
-      rawSpeed = Math.max(0x02, Math.min(0xFF, Math.round(params.speed * 25.5)));
+      // slider 1 -> 0x01 (fastest), slider 10 -> 0xFF (slowest)
+      rawSpeed = Math.max(0x01, Math.min(0xFF, Math.round(params.speed * 25.5)));
     }
     const cmd = [0xBB, mode, rawSpeed, 0x44];
     console.log(`[BLE] Effect -> mode 0x${mode.toString(16)} speed 0x${rawSpeed.toString(16)} -> [${cmd.map(x => x.toString(16).padStart(2, '0')).join(' ')}]`);

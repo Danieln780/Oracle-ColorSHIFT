@@ -167,8 +167,40 @@ h1 {
   animation: pulse 1s infinite;
 }
 
+/* Brightness bar */
+#brightness-bar {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  height: 36px;
+  background: #0d0d14;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  z-index: 99;
+  border-bottom: 1px solid #1a1a24;
+}
+
+.brightness-icon {
+  font-size: 16px;
+  color: #ff6b00;
+}
+
+#brightness-bar input[type="range"] {
+  flex: 1;
+}
+
+#global-brightness-val {
+  font-size: 12px;
+  color: #888;
+  min-width: 36px;
+  text-align: right;
+}
+
 #tab-content {
-  padding-top: 56px;
+  padding-top: 92px;
   padding-bottom: 56px;
   min-height: 100vh;
   max-width: 480px;
