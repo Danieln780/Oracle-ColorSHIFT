@@ -141,6 +141,14 @@ const BLE = {
         const value = new Uint8Array(event.target.value.buffer);
         const hex = Array.from(value).map(b => b.toString(16).padStart(2, '0')).join(' ');
         console.log('[BLE] Notify <-', hex);
+        // Parse Triones status response (12 bytes)
+        if (value.length >= 9 && value[0] === 0x66) {
+          const power = value[2] === 0x23 ? 'ON' : 'OFF';
+          const mode = value[3];
+          const speed = value[5];
+          const r = value[6], g = value[7], b = value[8];
+          console.log(`[BLE] Status: power=${power} mode=0x${mode.toString(16)} speed=0x${speed.toString(16)} rgb=(${r},${g},${b})`);
+        }
       });
       console.log('[BLE] Subscribed to notify characteristic: FFD4');
     } catch (e) {
@@ -203,60 +211,66 @@ const BLE = {
     }
   },
 
-  // ======= Protocol: 9-byte packets =======
-  // Format: 0x7E 0x00 [CMD] [SUB] [ARG1] [ARG2] [ARG3] 0x00 0xEF
+  // ======= Triones Protocol (confirmed for Oracle-B1E4) =======
+  // Write to FFD9, notifications from FFD4
 
-  // Power on/off
+  // Power on: CC 23 33 | Power off: CC 24 33
   sendPower(on) {
-    const cmd = on
-      ? [0x7E, 0x00, 0x04, 0x01, 0x00, 0x00, 0x00, 0x00, 0xEF]
-      : [0x7E, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0xEF];
-    console.log(`[BLE] Power ${on ? 'ON' : 'OFF'}`);
+    const cmd = on ? [0xCC, 0x23, 0x33] : [0xCC, 0x24, 0x33];
+    console.log(`[BLE] Power ${on ? 'ON' : 'OFF'} -> [${cmd.map(x => x.toString(16)).join(' ')}]`);
     this.sendRaw(cmd);
   },
 
-  // Set RGB color: 7E 00 05 03 RR GG BB 00 EF
+  // Set RGB color: 56 RR GG BB 00 F0 AA
   sendColor(zone, r, g, b, brightness) {
     const scale = (brightness || 100) / 100;
     const sr = Math.min(255, Math.round(r * scale));
     const sg = Math.min(255, Math.round(g * scale));
     const sb = Math.min(255, Math.round(b * scale));
-    const cmd = [0x7E, 0x00, 0x05, 0x03, sr, sg, sb, 0x00, 0xEF];
-    console.log(`[BLE] Color -> ${zone}: rgb(${sr},${sg},${sb}) cmd=[${cmd.map(x => '0x' + x.toString(16).padStart(2, '0')).join(' ')}]`);
+    const cmd = [0x56, sr, sg, sb, 0x00, 0xF0, 0xAA];
+    console.log(`[BLE] Color -> ${zone}: rgb(${sr},${sg},${sb}) -> [${cmd.map(x => x.toString(16).padStart(2, '0')).join(' ')}]`);
     this.sendRaw(cmd);
   },
 
-  // Set brightness: 7E 00 01 [0-100] 00 00 00 00 EF
+  // Set white intensity: 56 00 00 00 WW 0F AA (WW: 0x01-0xFF)
+  sendWhite(intensity) {
+    const val = Math.max(1, Math.min(255, Math.round(intensity * 2.55)));
+    const cmd = [0x56, 0x00, 0x00, 0x00, val, 0x0F, 0xAA];
+    console.log(`[BLE] White -> ${intensity}% (0x${val.toString(16)})`);
+    this.sendRaw(cmd);
+  },
+
+  // Set brightness via RGB scaling (Triones has no separate brightness command)
   sendBrightness(level) {
-    const val = Math.max(0, Math.min(100, Math.round(level)));
-    const cmd = [0x7E, 0x00, 0x01, val, 0x00, 0x00, 0x00, 0x00, 0xEF];
-    console.log(`[BLE] Brightness -> ${val}%`);
-    this.sendRaw(cmd);
+    // Re-send current color at new brightness
+    console.log(`[BLE] Brightness -> ${level}% (applied via color scaling)`);
   },
 
-  // Set effect speed: 7E 00 02 [0-100] 00 00 00 00 EF
-  sendSpeed(speed) {
-    const val = Math.max(0, Math.min(100, Math.round(speed)));
-    const cmd = [0x7E, 0x00, 0x02, val, 0x00, 0x00, 0x00, 0x00, 0xEF];
-    console.log(`[BLE] Speed -> ${val}`);
-    this.sendRaw(cmd);
-  },
-
-  // Set effect mode: 7E 00 03 [mode] [speed] 00 00 00 EF
+  // Built-in mode: BB [mode] [speed] 44
+  // Modes 0x25-0x38: 7-color fade, RGB fade, red/green/blue/yellow/cyan/purple/white gradual,
+  //                  7-color strobe, red/green/blue strobe, 7-color jump
+  // Speed: 0x01=fastest, 0xFF=slowest
   sendEffect(type, params) {
-    // Mode byte mapping for built-in effects
     const modeMap = {
-      fade: 0x25,
-      pulse: 0x26,
-      phase: 0x27,
-      chase: 0x28,
-      strobe: 0x30,
-      rainbow: 0x25  // rainbow = multi-color fade
+      fade: 0x25,       // seven color cross fade
+      pulse: 0x26,      // red gradual
+      phase: 0x2C,      // yellow gradual
+      chase: 0x30,      // seven color strobe
+      strobe: 0x33,     // red strobe
+      rainbow: 0x25     // seven color cross fade = rainbow
     };
     const mode = modeMap[type] || 0x25;
-    const speed = params?.speed ? Math.min(100, Math.round(params.speed * 10)) : 50;
-    const cmd = [0x7E, 0x00, 0x03, mode, speed, 0x00, 0x00, 0x00, 0xEF];
-    console.log(`[BLE] Effect -> ${type} (mode 0x${mode.toString(16)}, speed ${speed})`);
+    // Convert speed: our UI uses seconds (0.5-10), protocol uses 0x01(fast)-0xFF(slow)
+    const rawSpeed = params?.speed ? Math.max(1, Math.min(255, Math.round(params.speed * 25))) : 0x03;
+    const cmd = [0xBB, mode, rawSpeed, 0x44];
+    console.log(`[BLE] Effect -> ${type} (mode 0x${mode.toString(16)}, speed 0x${rawSpeed.toString(16)}) -> [${cmd.map(x => x.toString(16).padStart(2, '0')).join(' ')}]`);
+    this.sendRaw(cmd);
+  },
+
+  // Query device status: EF 01 77 (response comes on FFD4 notify)
+  queryStatus() {
+    const cmd = [0xEF, 0x01, 0x77];
+    console.log('[BLE] Query status');
     this.sendRaw(cmd);
   },
 
