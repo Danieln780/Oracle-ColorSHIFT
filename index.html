@@ -27,6 +27,7 @@
         <button class="zone-btn active" data-zone="inner">Inner Halo</button>
         <button class="zone-btn active" data-zone="demon">Demon Eye</button>
       </div>
+      <p class="zone-note">BC2 sends to all zones together. Independent zone control requires additional controllers.</p>
       <div class="wheel-container">
         <canvas id="color-wheel" width="280" height="280"></canvas>
       </div>
@@ -42,40 +43,23 @@
       <div class="quick-colors" id="quick-colors"></div>
     </section>
     <section id="tab-effects" class="tab-panel">
-      <div class="effect-modes">
-        <button class="effect-card" data-mode="fade">
-          <span class="effect-icon">~</span>
-          <span class="effect-label">Fade</span>
-        </button>
-        <button class="effect-card" data-mode="strobe">
-          <span class="effect-icon">!</span>
-          <span class="effect-label">Strobe</span>
-        </button>
-        <button class="effect-card" data-mode="chase">
-          <span class="effect-icon">&gt;</span>
-          <span class="effect-label">Chase</span>
-        </button>
-        <button class="effect-card" data-mode="pulse">
-          <span class="effect-icon">O</span>
-          <span class="effect-label">Pulse</span>
-        </button>
-        <button class="effect-card" data-mode="rainbow">
-          <span class="effect-icon rainbow-icon">R</span>
-          <span class="effect-label">Rainbow</span>
-        </button>
-        <button class="effect-card" data-mode="phase">
-          <span class="effect-icon">&#x21C4;</span>
-          <span class="effect-label">Phase</span>
-        </button>
+      <div class="effect-speed-row">
+        <button id="effect-static-btn" class="secondary-btn">Solid Color</button>
+        <label>Speed</label>
+        <input type="range" id="effect-speed-slider" min="1" max="10" value="5">
+        <span id="effect-speed-val">5</span>
       </div>
-      <div id="effect-controls" class="effect-controls"></div>
+      <div class="effect-modes">
+        <!-- Populated by EffectsTab.renderModes() -->
+      </div>
       <div class="sequencer-section">
         <h3>Custom Sequence</h3>
+        <p class="dev-hint" style="margin-bottom:8px">Build a color sequence — sends each color to the controller in order.</p>
         <div id="seq-steps" class="seq-steps"></div>
         <button id="seq-add-btn" class="secondary-btn">+ Add Step</button>
         <div class="seq-controls">
           <div id="seq-preview-indicator" class="seq-preview-indicator"></div>
-          <button id="seq-preview-btn" class="primary-btn">Preview</button>
+          <button id="seq-preview-btn" class="primary-btn">Play</button>
           <button id="seq-stop-btn" class="secondary-btn">Stop</button>
         </div>
       </div>

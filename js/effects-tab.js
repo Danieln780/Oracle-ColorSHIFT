@@ -3,358 +3,125 @@ const EffectsTab = {
   sequencerSteps: [],
   previewInterval: null,
 
-  modes: {
-    fade: {
-      label: 'Fade',
-      icon: '~',
-      defaults: { colors: ['#ff6b00', '#0066ff'], speed: 3 },
-      renderControls() {
-        const data = EffectsTab._getModeData('fade', { colors: [...this.defaults.colors], speed: this.defaults.speed });
-        let html = '<div class="effect-control-group">';
-        html += '<label class="effect-control-label">Colors</label>';
-        html += '<div id="fade-color-list">';
-        data.colors.forEach((c, i) => {
-          html += `<div class="color-list-item">
-            <input type="color" value="${c}" data-index="${i}" class="fade-color-input">
-            <span class="color-hex">${c}</span>
-            ${data.colors.length > 2 ? `<button class="remove-color-btn" data-index="${i}">&times;</button>` : ''}
-          </div>`;
-        });
-        html += '</div>';
-        html += '<button class="add-color-btn" id="fade-add-color">+ Add Color</button>';
-        html += '<div class="slider-row" style="margin-top:12px">';
-        html += '<label>Speed</label>';
-        html += `<input type="range" id="fade-speed" min="0.5" max="10" step="0.5" value="${data.speed}">`;
-        html += `<span id="fade-speed-val">${data.speed}s</span>`;
-        html += '</div>';
-        html += '</div>';
-        return html;
-      },
-      bindEvents() {
-        const data = EffectsTab._getModeData('fade');
-        document.querySelectorAll('.fade-color-input').forEach(input => {
-          input.addEventListener('input', (e) => {
-            const idx = parseInt(e.target.dataset.index);
-            data.colors[idx] = e.target.value;
-            e.target.nextElementSibling.textContent = e.target.value;
-          });
-        });
-        document.querySelectorAll('#fade-color-list .remove-color-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            data.colors.splice(parseInt(e.target.dataset.index), 1);
-            EffectsTab._refreshControls();
-          });
-        });
-        document.getElementById('fade-add-color')?.addEventListener('click', () => {
-          data.colors.push('#ffffff');
-          EffectsTab._refreshControls();
-        });
-        document.getElementById('fade-speed')?.addEventListener('input', (e) => {
-          data.speed = parseFloat(e.target.value);
-          document.getElementById('fade-speed-val').textContent = data.speed + 's';
-        });
-      }
+  // All 20 Triones built-in modes grouped by category
+  modeGroups: [
+    {
+      label: 'Fades',
+      modes: [
+        { code: 0x25, name: 'Rainbow Fade', icon: 'R', iconClass: 'rainbow-icon' },
+        { code: 0x2D, name: 'Red/Green', icon: '~' },
+        { code: 0x2E, name: 'Red/Blue', icon: '~' },
+        { code: 0x2F, name: 'Green/Blue', icon: '~' }
+      ]
     },
-    strobe: {
-      label: 'Strobe',
-      icon: '!',
-      defaults: { color: '#ffffff', frequency: 5 },
-      renderControls() {
-        const data = EffectsTab._getModeData('strobe', { color: this.defaults.color, frequency: this.defaults.frequency });
-        let html = '<div class="effect-control-group">';
-        html += '<label class="effect-control-label">Color</label>';
-        html += `<div class="color-list-item">
-          <input type="color" value="${data.color}" id="strobe-color">
-          <span class="color-hex" id="strobe-color-hex">${data.color}</span>
-        </div>`;
-        html += '<div class="slider-row" style="margin-top:12px">';
-        html += '<label>Frequency</label>';
-        html += `<input type="range" id="strobe-freq" min="1" max="20" step="1" value="${data.frequency}">`;
-        html += `<span id="strobe-freq-val">${data.frequency} Hz</span>`;
-        html += '</div>';
-        html += '</div>';
-        return html;
-      },
-      bindEvents() {
-        const data = EffectsTab._getModeData('strobe');
-        document.getElementById('strobe-color')?.addEventListener('input', (e) => {
-          data.color = e.target.value;
-          document.getElementById('strobe-color-hex').textContent = e.target.value;
-        });
-        document.getElementById('strobe-freq')?.addEventListener('input', (e) => {
-          data.frequency = parseInt(e.target.value);
-          document.getElementById('strobe-freq-val').textContent = data.frequency + ' Hz';
-        });
-      }
+    {
+      label: 'Graduals',
+      modes: [
+        { code: 0x26, name: 'Red Pulse', icon: 'O', color: '#ff0000' },
+        { code: 0x27, name: 'Green Pulse', icon: 'O', color: '#00ff00' },
+        { code: 0x28, name: 'Blue Pulse', icon: 'O', color: '#0066ff' },
+        { code: 0x29, name: 'Yellow Pulse', icon: 'O', color: '#ffff00' },
+        { code: 0x2A, name: 'Cyan Pulse', icon: 'O', color: '#00ffff' },
+        { code: 0x2B, name: 'Purple Pulse', icon: 'O', color: '#aa00ff' },
+        { code: 0x2C, name: 'White Pulse', icon: 'O', color: '#ffffff' }
+      ]
     },
-    chase: {
-      label: 'Chase',
-      icon: '>',
-      defaults: { colors: ['#ff0000', '#00ff00', '#0000ff'], speed: 2, direction: 'forward' },
-      renderControls() {
-        const data = EffectsTab._getModeData('chase', { colors: [...this.defaults.colors], speed: this.defaults.speed, direction: this.defaults.direction });
-        let html = '<div class="effect-control-group">';
-        html += '<label class="effect-control-label">Colors</label>';
-        html += '<div id="chase-color-list">';
-        data.colors.forEach((c, i) => {
-          html += `<div class="color-list-item">
-            <input type="color" value="${c}" data-index="${i}" class="chase-color-input">
-            <span class="color-hex">${c}</span>
-            ${data.colors.length > 2 ? `<button class="remove-color-btn" data-index="${i}">&times;</button>` : ''}
-          </div>`;
-        });
-        html += '</div>';
-        html += '<button class="add-color-btn" id="chase-add-color">+ Add Color</button>';
-        html += '<div class="slider-row" style="margin-top:12px">';
-        html += '<label>Speed</label>';
-        html += `<input type="range" id="chase-speed" min="0.5" max="10" step="0.5" value="${data.speed}">`;
-        html += `<span id="chase-speed-val">${data.speed}s</span>`;
-        html += '</div>';
-        html += '<label class="effect-control-label" style="margin-top:12px">Direction</label>';
-        html += '<div class="direction-toggle">';
-        html += `<button class="direction-btn ${data.direction === 'forward' ? 'active' : ''}" data-dir="forward">Forward</button>`;
-        html += `<button class="direction-btn ${data.direction === 'reverse' ? 'active' : ''}" data-dir="reverse">Reverse</button>`;
-        html += '</div>';
-        html += '</div>';
-        return html;
-      },
-      bindEvents() {
-        const data = EffectsTab._getModeData('chase');
-        document.querySelectorAll('.chase-color-input').forEach(input => {
-          input.addEventListener('input', (e) => {
-            const idx = parseInt(e.target.dataset.index);
-            data.colors[idx] = e.target.value;
-            e.target.nextElementSibling.textContent = e.target.value;
-          });
-        });
-        document.querySelectorAll('#chase-color-list .remove-color-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            data.colors.splice(parseInt(e.target.dataset.index), 1);
-            EffectsTab._refreshControls();
-          });
-        });
-        document.getElementById('chase-add-color')?.addEventListener('click', () => {
-          data.colors.push('#ffffff');
-          EffectsTab._refreshControls();
-        });
-        document.getElementById('chase-speed')?.addEventListener('input', (e) => {
-          data.speed = parseFloat(e.target.value);
-          document.getElementById('chase-speed-val').textContent = data.speed + 's';
-        });
-        document.querySelectorAll('.direction-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            data.direction = e.target.dataset.dir;
-            document.querySelectorAll('.direction-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-          });
-        });
-      }
+    {
+      label: 'Strobes',
+      modes: [
+        { code: 0x30, name: 'Rainbow Strobe', icon: '!', iconClass: 'rainbow-icon' },
+        { code: 0x31, name: 'Red Strobe', icon: '!', color: '#ff0000' },
+        { code: 0x32, name: 'Green Strobe', icon: '!', color: '#00ff00' },
+        { code: 0x33, name: 'Blue Strobe', icon: '!', color: '#0066ff' },
+        { code: 0x34, name: 'Yellow Strobe', icon: '!', color: '#ffff00' },
+        { code: 0x35, name: 'Cyan Strobe', icon: '!', color: '#00ffff' },
+        { code: 0x36, name: 'Purple Strobe', icon: '!', color: '#aa00ff' },
+        { code: 0x37, name: 'White Strobe', icon: '!', color: '#ffffff' }
+      ]
     },
-    pulse: {
-      label: 'Pulse',
-      icon: 'O',
-      defaults: { color: '#ff6b00', speed: 2, minBrightness: 10, maxBrightness: 100 },
-      renderControls() {
-        const data = EffectsTab._getModeData('pulse', { color: this.defaults.color, speed: this.defaults.speed, minBrightness: this.defaults.minBrightness, maxBrightness: this.defaults.maxBrightness });
-        let html = '<div class="effect-control-group">';
-        html += '<label class="effect-control-label">Color</label>';
-        html += `<div class="color-list-item">
-          <input type="color" value="${data.color}" id="pulse-color">
-          <span class="color-hex" id="pulse-color-hex">${data.color}</span>
-        </div>`;
-        html += '<div class="slider-row" style="margin-top:12px">';
-        html += '<label>Speed</label>';
-        html += `<input type="range" id="pulse-speed" min="0.5" max="5" step="0.5" value="${data.speed}">`;
-        html += `<span id="pulse-speed-val">${data.speed}s</span>`;
-        html += '</div>';
-        html += '<div class="slider-row">';
-        html += '<label>Min Bright</label>';
-        html += `<input type="range" id="pulse-min" min="0" max="50" step="5" value="${data.minBrightness}">`;
-        html += `<span id="pulse-min-val">${data.minBrightness}%</span>`;
-        html += '</div>';
-        html += '<div class="slider-row">';
-        html += '<label>Max Bright</label>';
-        html += `<input type="range" id="pulse-max" min="50" max="100" step="5" value="${data.maxBrightness}">`;
-        html += `<span id="pulse-max-val">${data.maxBrightness}%</span>`;
-        html += '</div>';
-        html += '</div>';
-        return html;
-      },
-      bindEvents() {
-        const data = EffectsTab._getModeData('pulse');
-        document.getElementById('pulse-color')?.addEventListener('input', (e) => {
-          data.color = e.target.value;
-          document.getElementById('pulse-color-hex').textContent = e.target.value;
-        });
-        document.getElementById('pulse-speed')?.addEventListener('input', (e) => {
-          data.speed = parseFloat(e.target.value);
-          document.getElementById('pulse-speed-val').textContent = data.speed + 's';
-        });
-        document.getElementById('pulse-min')?.addEventListener('input', (e) => {
-          data.minBrightness = parseInt(e.target.value);
-          document.getElementById('pulse-min-val').textContent = data.minBrightness + '%';
-        });
-        document.getElementById('pulse-max')?.addEventListener('input', (e) => {
-          data.maxBrightness = parseInt(e.target.value);
-          document.getElementById('pulse-max-val').textContent = data.maxBrightness + '%';
-        });
-      }
+    {
+      label: 'Jumps',
+      modes: [
+        { code: 0x38, name: 'Rainbow Jump', icon: '>', iconClass: 'rainbow-icon' }
+      ]
     }
-  },
+  ],
 
-    rainbow: {
-      label: 'Rainbow',
-      icon: 'R',
-      defaults: { speed: 3, style: 'smooth' },
-      renderControls() {
-        const data = EffectsTab._getModeData('rainbow', { speed: this.defaults.speed, style: this.defaults.style });
-        let html = '<div class="effect-control-group">';
-        html += '<label class="effect-control-label">Style</label>';
-        html += '<div class="direction-toggle">';
-        ['smooth', 'stepped', 'sparkle'].forEach(s => {
-          html += `<button class="direction-btn ${data.style === s ? 'active' : ''}" data-style="${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</button>`;
-        });
-        html += '</div>';
-        html += '<div class="slider-row" style="margin-top:12px">';
-        html += '<label>Speed</label>';
-        html += `<input type="range" id="rainbow-speed" min="1" max="10" step="1" value="${data.speed}">`;
-        html += `<span id="rainbow-speed-val">${data.speed}s</span>`;
-        html += '</div>';
-        html += '<div class="rainbow-preview-bar"></div>';
-        html += '</div>';
-        return html;
-      },
-      bindEvents() {
-        const data = EffectsTab._getModeData('rainbow');
-        document.getElementById('rainbow-speed')?.addEventListener('input', (e) => {
-          data.speed = parseInt(e.target.value);
-          document.getElementById('rainbow-speed-val').textContent = data.speed + 's';
-          EffectsTab._sendEffect();
-        });
-        document.querySelectorAll('#effect-controls .direction-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            data.style = e.target.dataset.style;
-            document.querySelectorAll('#effect-controls .direction-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            EffectsTab._sendEffect();
-          });
-        });
-      }
-    },
-    phase: {
-      label: 'Phase',
-      icon: '\u21C4',
-      defaults: { speed: 3, colors: ['#ff0000', '#00ff00', '#0000ff'], offset: 120 },
-      renderControls() {
-        const data = EffectsTab._getModeData('phase', { speed: this.defaults.speed, colors: [...this.defaults.colors], offset: this.defaults.offset });
-        let html = '<div class="effect-control-group">';
-        html += '<label class="effect-control-label">Phase Colors</label>';
-        html += '<div id="phase-color-list">';
-        data.colors.forEach((c, i) => {
-          html += `<div class="color-list-item">
-            <input type="color" value="${c}" data-index="${i}" class="phase-color-input">
-            <span class="color-hex">${c}</span>
-            ${data.colors.length > 2 ? `<button class="remove-color-btn" data-index="${i}">&times;</button>` : ''}
-          </div>`;
-        });
-        html += '</div>';
-        html += '<button class="add-color-btn" id="phase-add-color">+ Add Color</button>';
-        html += '<div class="slider-row" style="margin-top:12px">';
-        html += '<label>Speed</label>';
-        html += `<input type="range" id="phase-speed" min="1" max="10" step="1" value="${data.speed}">`;
-        html += `<span id="phase-speed-val">${data.speed}s</span>`;
-        html += '</div>';
-        html += '<div class="slider-row">';
-        html += '<label>Phase Offset</label>';
-        html += `<input type="range" id="phase-offset" min="30" max="180" step="15" value="${data.offset}">`;
-        html += `<span id="phase-offset-val">${data.offset}&deg;</span>`;
-        html += '</div>';
-        html += '</div>';
-        return html;
-      },
-      bindEvents() {
-        const data = EffectsTab._getModeData('phase');
-        document.querySelectorAll('.phase-color-input').forEach(input => {
-          input.addEventListener('input', (e) => {
-            const idx = parseInt(e.target.dataset.index);
-            data.colors[idx] = e.target.value;
-            e.target.nextElementSibling.textContent = e.target.value;
-          });
-        });
-        document.querySelectorAll('#phase-color-list .remove-color-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            data.colors.splice(parseInt(e.target.dataset.index), 1);
-            EffectsTab._refreshControls();
-          });
-        });
-        document.getElementById('phase-add-color')?.addEventListener('click', () => {
-          data.colors.push('#ffffff');
-          EffectsTab._refreshControls();
-        });
-        document.getElementById('phase-speed')?.addEventListener('input', (e) => {
-          data.speed = parseInt(e.target.value);
-          document.getElementById('phase-speed-val').textContent = data.speed + 's';
-          EffectsTab._sendEffect();
-        });
-        document.getElementById('phase-offset')?.addEventListener('input', (e) => {
-          data.offset = parseInt(e.target.value);
-          document.getElementById('phase-offset-val').textContent = data.offset + '\u00B0';
-          EffectsTab._sendEffect();
-        });
-      }
-    }
-  },
-
-  // Store per-mode user data so changes persist when switching modes
-  _modeData: {},
-
-  _getModeData(mode, defaults) {
-    if (!this._modeData[mode] && defaults) {
-      this._modeData[mode] = defaults;
-    }
-    return this._modeData[mode];
-  },
+  speed: 5, // 1-10 slider value
 
   init() {
-    this.bindModeCards();
+    this.renderModes();
+    this.bindSpeedSlider();
     this.bindSequencer();
   },
 
-  bindModeCards() {
-    document.querySelectorAll('.effect-card').forEach(card => {
+  renderModes() {
+    const container = document.querySelector('#tab-effects .effect-modes');
+    if (!container) return;
+
+    let html = '';
+    this.modeGroups.forEach(group => {
+      html += `<div class="effect-group-label">${group.label}</div>`;
+      html += '<div class="effect-grid">';
+      group.modes.forEach(mode => {
+        const colorStyle = mode.color ? `color:${mode.color}` : '';
+        const iconClass = mode.iconClass || '';
+        html += `<button class="effect-card" data-mode="${mode.code}">
+          <span class="effect-icon ${iconClass}" style="${colorStyle}">${mode.icon}</span>
+          <span class="effect-label">${mode.name}</span>
+        </button>`;
+      });
+      html += '</div>';
+    });
+
+    container.innerHTML = html;
+
+    // Bind click events
+    container.querySelectorAll('.effect-card').forEach(card => {
       card.addEventListener('click', () => {
-        this.selectMode(card.dataset.mode);
+        const mode = parseInt(card.dataset.mode);
+        this.selectMode(mode, card);
       });
     });
   },
 
-  selectMode(mode) {
-    this.activeMode = mode;
+  selectMode(modeCode, cardElement) {
+    this.activeMode = modeCode;
+
     // Update card highlights
-    document.querySelectorAll('.effect-card').forEach(c => {
-      c.classList.toggle('active', c.dataset.mode === mode);
+    document.querySelectorAll('.effect-card').forEach(c => c.classList.remove('active'));
+    if (cardElement) cardElement.classList.add('active');
+
+    // Send effect command immediately
+    if (typeof BLE !== 'undefined' && BLE.sendEffect) {
+      BLE.sendEffect(modeCode, { speed: this.speed });
+    }
+  },
+
+  bindSpeedSlider() {
+    const slider = document.getElementById('effect-speed-slider');
+    const label = document.getElementById('effect-speed-val');
+    if (!slider) return;
+
+    slider.addEventListener('input', (e) => {
+      this.speed = parseInt(e.target.value);
+      label.textContent = this.speed;
+
+      // Re-send current effect at new speed
+      if (this.activeMode !== null && typeof BLE !== 'undefined' && BLE.sendEffect) {
+        BLE.sendEffect(this.activeMode, { speed: this.speed });
+      }
     });
-    // Render controls for selected mode
-    this._refreshControls();
-    // Send effect command via BLE if connected
-    this._sendEffect();
   },
 
-  _refreshControls() {
-    const container = document.getElementById('effect-controls');
-    if (!this.activeMode || !this.modes[this.activeMode]) {
-      container.innerHTML = '';
-      return;
+  // Static color button — returns to solid color mode (exits effects)
+  goStatic() {
+    // Send current color to exit effect mode
+    if (typeof ColorsTab !== 'undefined' && ColorsTab.sendCurrentColor) {
+      ColorsTab.sendCurrentColor();
     }
-    container.innerHTML = this.modes[this.activeMode].renderControls();
-    this.modes[this.activeMode].bindEvents();
-  },
-
-  _sendEffect() {
-    if (typeof BLE !== 'undefined' && BLE.sendEffect && BLE.isConnected()) {
-      const data = this._modeData[this.activeMode];
-      BLE.sendEffect(this.activeMode, data);
-    }
+    this.activeMode = null;
+    document.querySelectorAll('.effect-card').forEach(c => c.classList.remove('active'));
   },
 
   // Sequencer
@@ -386,17 +153,14 @@ const EffectsTab = {
       </div>`;
     }).join('');
 
-    // Bind step events
     container.querySelectorAll('.seq-color-input').forEach(input => {
       input.addEventListener('input', (e) => {
-        const idx = parseInt(e.target.dataset.index);
-        this.sequencerSteps[idx].color = e.target.value;
+        this.sequencerSteps[parseInt(e.target.dataset.index)].color = e.target.value;
       });
     });
     container.querySelectorAll('.seq-duration-input').forEach(input => {
       input.addEventListener('change', (e) => {
-        const idx = parseInt(e.target.dataset.index);
-        this.sequencerSteps[idx].duration = Math.max(50, parseInt(e.target.value) || 50);
+        this.sequencerSteps[parseInt(e.target.dataset.index)].duration = Math.max(50, parseInt(e.target.value) || 50);
       });
     });
     container.querySelectorAll('.remove-step-btn').forEach(btn => {
@@ -412,14 +176,20 @@ const EffectsTab = {
     let i = 0;
     const indicator = document.getElementById('seq-preview-indicator');
     const runStep = () => {
-      if (this.sequencerSteps.length === 0) {
-        this.stopPreview();
-        return;
-      }
+      if (this.sequencerSteps.length === 0) { this.stopPreview(); return; }
       const stepIndex = i % this.sequencerSteps.length;
       const step = this.sequencerSteps[stepIndex];
       indicator.style.backgroundColor = step.color;
-      // Highlight active step
+
+      // Send color to BLE
+      const hex = step.color;
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      if (typeof BLE !== 'undefined' && BLE.sendColor) {
+        BLE.sendColor('all', r, g, b, 100);
+      }
+
       document.querySelectorAll('.seq-step').forEach((el, idx) => {
         el.classList.toggle('active', idx === stepIndex);
       });

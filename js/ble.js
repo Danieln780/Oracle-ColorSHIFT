@@ -246,24 +246,56 @@ const BLE = {
     console.log(`[BLE] Brightness -> ${level}% (applied via color scaling)`);
   },
 
+  // All 20 Triones built-in modes (0x25-0x38)
+  EFFECTS: {
+    0x25: 'Seven Color Fade',
+    0x26: 'Red Gradual',
+    0x27: 'Green Gradual',
+    0x28: 'Blue Gradual',
+    0x29: 'Yellow Gradual',
+    0x2A: 'Cyan Gradual',
+    0x2B: 'Purple Gradual',
+    0x2C: 'White Gradual',
+    0x2D: 'Red/Green Fade',
+    0x2E: 'Red/Blue Fade',
+    0x2F: 'Green/Blue Fade',
+    0x30: 'Seven Color Strobe',
+    0x31: 'Red Strobe',
+    0x32: 'Green Strobe',
+    0x33: 'Blue Strobe',
+    0x34: 'Yellow Strobe',
+    0x35: 'Cyan Strobe',
+    0x36: 'Purple Strobe',
+    0x37: 'White Strobe',
+    0x38: 'Seven Color Jump'
+  },
+
   // Built-in mode: BB [mode] [speed] 44
-  // Modes 0x25-0x38: 7-color fade, RGB fade, red/green/blue/yellow/cyan/purple/white gradual,
-  //                  7-color strobe, red/green/blue strobe, 7-color jump
   // Speed: 0x01=fastest, 0xFF=slowest
   sendEffect(type, params) {
-    const modeMap = {
-      fade: 0x25,       // seven color cross fade
-      pulse: 0x26,      // red gradual
-      phase: 0x2C,      // yellow gradual
-      chase: 0x30,      // seven color strobe
-      strobe: 0x33,     // red strobe
-      rainbow: 0x25     // seven color cross fade = rainbow
-    };
-    const mode = modeMap[type] || 0x25;
-    // Convert speed: our UI uses seconds (0.5-10), protocol uses 0x01(fast)-0xFF(slow)
-    const rawSpeed = params?.speed ? Math.max(1, Math.min(255, Math.round(params.speed * 25))) : 0x03;
+    // Accept direct mode byte or map from name
+    let mode;
+    if (typeof type === 'number') {
+      mode = type;
+    } else {
+      const modeMap = {
+        fade: 0x25,       // seven color cross fade
+        pulse: 0x26,      // red gradual
+        phase: 0x2D,      // red/green cross fade
+        chase: 0x38,      // seven color jump
+        strobe: 0x30,     // seven color strobe
+        rainbow: 0x25     // seven color cross fade
+      };
+      mode = modeMap[type] || 0x25;
+    }
+    // Speed: slider 1-10 maps to 0x01(fast)-0xFF(slow)
+    // Default to medium speed
+    let rawSpeed = 0x10;
+    if (params?.speed) {
+      rawSpeed = Math.max(0x01, Math.min(0xFF, Math.round(params.speed * 25)));
+    }
     const cmd = [0xBB, mode, rawSpeed, 0x44];
-    console.log(`[BLE] Effect -> ${type} (mode 0x${mode.toString(16)}, speed 0x${rawSpeed.toString(16)}) -> [${cmd.map(x => x.toString(16).padStart(2, '0')).join(' ')}]`);
+    console.log(`[BLE] Effect -> mode 0x${mode.toString(16)} speed 0x${rawSpeed.toString(16)} -> [${cmd.map(x => x.toString(16).padStart(2, '0')).join(' ')}]`);
     this.sendRaw(cmd);
   },
 

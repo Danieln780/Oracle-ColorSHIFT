@@ -11,7 +11,15 @@
       "WebFetch(domain:claude.ai)",
       "Bash(gh api:*)",
       "WebFetch(domain:oracle-customer-help-center.document360.io)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(adb version:*)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Users/dlsn8/AppData/Local/**)",
+      "Bash(curl -L -o /c/Users/dlsn8/Downloads/platform-tools.zip https://dl.google.com/android/repository/platform-tools-latest-windows.zip)",
+      "Bash(export PATH=\"$PATH:/c/Users/dlsn8/android-tools/platform-tools\")",
+      "Bash(adb devices:*)",
+      "Bash(adb kill-server:*)",
+      "Bash(adb start-server:*)"
     ]
   }
 }
