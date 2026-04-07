@@ -33,7 +33,9 @@
 - [ ] Import/export WLED presets
 
 ## Future Ideas
+- [ ] Welcome/Exit Light Sequence — detect headlight 12V power via ESP32 GPIO, auto-play animation on power on/off
 - [ ] Startup preset (auto-apply on power)
 - [ ] Scheduling (time-based color changes)
 - [ ] GPS triggers (color on location)
 - [ ] Multi-vehicle sync
+- [ ] Second BC2 controller for multi-channel control

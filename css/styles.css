@@ -237,6 +237,65 @@ h1 {
   text-align: right;
 }
 
+.auto-off-indicator {
+  font-size: 11px;
+  font-family: monospace;
+  color: #555;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Color temperature label */
+.color-temp-label {
+  font-size: 12px;
+  min-width: 55px;
+  text-align: right;
+}
+
+/* Breathing controls */
+.breathing-row {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #222;
+}
+
+.breathing-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: #111118;
+  border-radius: 8px;
+}
+
+.breathing-controls label {
+  font-size: 11px;
+  color: #888;
+}
+
+.breathing-controls input[type="range"] {
+  width: 80px;
+}
+
+.breathing-controls span {
+  font-size: 11px;
+  color: #888;
+  min-width: 28px;
+}
+
+.breathing-on {
+  background: #ff6b00 !important;
+  color: #000 !important;
+  border-color: #ff6b00 !important;
+  animation: breatheGlow 3s ease-in-out infinite;
+}
+
+@keyframes breatheGlow {
+  0%, 100% { box-shadow: 0 0 4px rgba(255, 107, 0, 0.3); }
+  50% { box-shadow: 0 0 16px rgba(255, 107, 0, 0.6); }
+}
+
 #tab-content {
   padding-top: 92px;
   padding-bottom: 56px;

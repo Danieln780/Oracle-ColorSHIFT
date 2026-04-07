@@ -25,6 +25,7 @@
     <span class="brightness-icon">&#x2600;</span>
     <input type="range" id="global-brightness" min="5" max="100" value="100">
     <span id="global-brightness-val">100%</span>
+    <span id="auto-off-timer" class="auto-off-indicator" title="Auto-off timer">15:00</span>
   </div>
 
   <main id="tab-content">
@@ -47,7 +48,22 @@
         <input type="range" id="brightness-slider" min="0" max="100" value="100">
         <span id="brightness-value">100%</span>
       </div>
+      <div class="slider-row">
+        <label>Color Temp</label>
+        <input type="range" id="color-temp-slider" min="0" max="100" value="50">
+        <span id="color-temp-val" class="color-temp-label">Neutral</span>
+      </div>
       <div class="quick-colors" id="quick-colors"></div>
+      <div class="breathing-row">
+        <button id="breathing-btn" class="secondary-btn breathing-off">Breathing</button>
+        <div class="breathing-controls" id="breathing-controls" style="display:none">
+          <label>Speed</label>
+          <input type="range" id="breathing-speed" min="1" max="10" value="4">
+          <label>Min</label>
+          <input type="range" id="breathing-min" min="0" max="40" value="10">
+          <span id="breathing-min-val">10%</span>
+        </div>
+      </div>
     </section>
     <section id="tab-effects" class="tab-panel">
       <div class="effect-controls-bar">
