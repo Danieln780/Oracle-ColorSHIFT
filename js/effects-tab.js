@@ -295,6 +295,9 @@ const EffectsTab = {
     this.stopCustomStrobe();
     this.activeMode = null;
     document.querySelectorAll('.effect-card').forEach(c => c.classList.remove('active'));
+    // Also stop preset custom timers and breathing
+    if (typeof PresetsTab !== 'undefined') PresetsTab._stopCustom();
+    if (typeof stopBreathing === 'function') stopBreathing();
   },
 
   goStatic() {

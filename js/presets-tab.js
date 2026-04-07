@@ -73,8 +73,15 @@ const PresetsTab = {
     const preset = all.find(p => p.id === id);
     if (!preset) return;
 
-    // Stop any running effects
+    // Stop ALL running effects — effects tab, presets custom timers, breathing, music
+    this._stopCustom();
     if (typeof EffectsTab !== 'undefined') EffectsTab.stopAll();
+    if (typeof stopBreathing === 'function') stopBreathing();
+    if (typeof MusicTab !== 'undefined' && MusicTab.isListening) {
+      MusicTab.stop();
+      const musicBtn = document.getElementById('music-toggle-btn');
+      if (musicBtn) { musicBtn.classList.remove('on'); musicBtn.classList.add('off'); }
+    }
 
     if (preset.type === 'color') {
       const c = preset.color;
@@ -110,8 +117,8 @@ const PresetsTab = {
   _strobeTimer: null,
 
   _stopCustom() {
-    clearTimeout(this._fadeTimer);
-    clearTimeout(this._strobeTimer);
+    if (this._fadeTimer) { clearTimeout(this._fadeTimer); this._fadeTimer = null; }
+    if (this._strobeTimer) { clearTimeout(this._strobeTimer); this._strobeTimer = null; }
   },
 
   _runFade(hexColors, speed) {
