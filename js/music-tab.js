@@ -73,6 +73,100 @@ const MusicTab = {
         };
       }
     },
+    dj: {
+      name: 'DJ',
+      desc: 'Auto-cycles effects: fade, strobe, sweep, pulse',
+      phase: 0,          // current effect phase
+      phaseTimer: 0,     // frames in current phase
+      phaseDuration: 180, // frames before auto-switch (~3 sec at 60fps)
+      lastBigBeat: 0,
+      hue: 0,
+      strobeOn: true,
+      // Color palettes to cycle through
+      palettes: [
+        ['#ff0000', '#0000ff'],           // red/blue
+        ['#ff6b00', '#aa00ff'],           // orange/purple
+        ['#00ff00', '#ff0066'],           // green/pink
+        ['#00ccff', '#ffff00'],           // cyan/yellow
+        ['#ff0000', '#ffff00', '#00ff00'], // traffic
+        ['#aa00ff', '#00ffff', '#ff00aa'], // neon
+      ],
+      currentPalette: 0,
+      phases: [
+        // Phase 0: Smooth hue sweep driven by volume
+        function(bass, mid, treble) {
+          const vol = (bass + mid + treble) / 3;
+          const dj = MusicTab.programs.dj;
+          dj.hue = (dj.hue + 1 + vol / 30) % 360;
+          return hslToRgb(dj.hue, 100, Math.max(20, Math.min(50, vol / 5)));
+        },
+        // Phase 1: Strobe between palette colors on beat
+        function(bass, mid, treble) {
+          const vol = (bass + mid + treble) / 3;
+          const dj = MusicTab.programs.dj;
+          const pal = dj.palettes[dj.currentPalette % dj.palettes.length];
+          if (vol > 50) {
+            dj.strobeOn = !dj.strobeOn;
+          }
+          const idx = dj.strobeOn ? 0 : (pal.length > 1 ? 1 : 0);
+          const c = hexToRgb(pal[idx]);
+          const bright = Math.min(1, vol / 150);
+          return { r: Math.round(c.r * bright), g: Math.round(c.g * bright), b: Math.round(c.b * bright) };
+        },
+        // Phase 2: Bass pulse — single color throbs with bass
+        function(bass, mid, treble) {
+          const dj = MusicTab.programs.dj;
+          const pal = dj.palettes[dj.currentPalette % dj.palettes.length];
+          const c = hexToRgb(pal[0]);
+          const scale = Math.min(1, bass / 180);
+          return { r: Math.round(c.r * scale), g: Math.round(c.g * scale), b: Math.round(c.b * scale) };
+        },
+        // Phase 3: Color fade between palette colors
+        function(bass, mid, treble) {
+          const dj = MusicTab.programs.dj;
+          const pal = dj.palettes[dj.currentPalette % dj.palettes.length];
+          const t = (dj.phaseTimer % 120) / 120; // fade over ~2 sec
+          const idx1 = Math.floor(t * pal.length) % pal.length;
+          const idx2 = (idx1 + 1) % pal.length;
+          const localT = (t * pal.length) % 1;
+          const c1 = hexToRgb(pal[idx1]);
+          const c2 = hexToRgb(pal[idx2]);
+          const vol = Math.max(0.3, Math.min(1, (bass + mid + treble) / 3 / 200));
+          return {
+            r: Math.round((c1.r + (c2.r - c1.r) * localT) * vol),
+            g: Math.round((c1.g + (c2.g - c1.g) * localT) * vol),
+            b: Math.round((c1.b + (c2.b - c1.b) * localT) * vol)
+          };
+        },
+        // Phase 4: Rapid random color on every beat
+        function(bass, mid, treble) {
+          const vol = (bass + mid + treble) / 3;
+          if (vol > 60) {
+            return hslToRgb(Math.random() * 360, 100, 50);
+          }
+          return { r: 15, g: 5, b: 20 }; // dim purple baseline
+        }
+      ],
+      compute(bass, mid, treble) {
+        const dj = MusicTab.programs.dj;
+        dj.phaseTimer++;
+        const vol = (bass + mid + treble) / 3;
+
+        // Switch phase on big beat drop or after duration
+        const isBigBeat = vol > 120 && (dj.phaseTimer - dj.lastBigBeat) > 60;
+        if (isBigBeat || dj.phaseTimer >= dj.phaseDuration) {
+          if (isBigBeat) dj.lastBigBeat = dj.phaseTimer;
+          dj.phase = (dj.phase + 1) % dj.phases.length;
+          dj.phaseTimer = 0;
+          // Cycle palette every 2 phase changes
+          if (dj.phase % 2 === 0) {
+            dj.currentPalette = (dj.currentPalette + 1) % dj.palettes.length;
+          }
+        }
+
+        return dj.phases[dj.phase](bass, mid, treble);
+      }
+    },
     custom: {
       name: 'Custom',
       desc: 'Blend between two colors based on volume',
