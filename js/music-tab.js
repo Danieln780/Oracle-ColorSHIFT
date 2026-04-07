@@ -232,14 +232,26 @@ const MusicTab = {
     // Apply react mode
     if (this.reactMode === 'snap') {
       // Quantize to nearest strong color
-      color.r = color.r > 128 ? 255 : 0;
-      color.g = color.g > 128 ? 255 : 0;
-      color.b = color.b > 128 ? 255 : 0;
+      color.r = color.r > 100 ? 255 : 0;
+      color.g = color.g > 100 ? 255 : 0;
+      color.b = color.b > 100 ? 255 : 0;
     } else if (this.reactMode === 'strobe') {
-      // Only show color on beats (when volume spikes)
+      // Beat strobe: dim baseline, bright flash on beats
+      // Lower threshold = more sensitive to beats
       const vol = (bass + mid + treble) / 3;
-      if (vol < 80) {
-        color = { r: 0, g: 0, b: 0 };
+      const threshold = 30 + (100 - this.sensitivity); // sensitivity makes it more reactive
+      const dimLevel = 0.15; // 15% brightness when quiet
+      if (vol < threshold) {
+        // Dim glow — don't go fully dark
+        color.r = Math.round(color.r * dimLevel);
+        color.g = Math.round(color.g * dimLevel);
+        color.b = Math.round(color.b * dimLevel);
+      } else {
+        // Beat hit — boost to full brightness
+        const boost = Math.min(2.0, 1.0 + (vol - threshold) / 100);
+        color.r = Math.min(255, Math.round(color.r * boost));
+        color.g = Math.min(255, Math.round(color.g * boost));
+        color.b = Math.min(255, Math.round(color.b * boost));
       }
     }
 
