@@ -531,68 +531,64 @@ h1 {
   color: #ff6b00;
 }
 
-/* Custom Color Fade */
-.custom-fade-section {
-  border-top: 1px solid #222;
-  padding-top: 16px;
-  margin-bottom: 16px;
-}
-
-.custom-fade-section h3 {
-  font-size: 14px;
-  color: #aaa;
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-
-.cf-color-list {
+/* Color selection rows */
+.color-select-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   margin-bottom: 10px;
 }
 
-.cf-color-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.cf-color-input {
-  width: 44px;
-  height: 44px;
-  border: 2px solid #333;
-  border-radius: 10px;
-  background: none;
-  cursor: pointer;
-  padding: 2px;
-}
-
-.cf-remove-btn {
-  background: none;
-  border: none;
-  color: #666;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 2px;
-}
-
-.cf-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.cf-preview {
-  width: 36px;
-  height: 36px;
+.color-select-btn {
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: #333;
-  border: 2px solid #444;
-  transition: background-color 0.1s;
+  border: 3px solid transparent;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s;
+  opacity: 0.4;
 }
 
-#custom-fade-btn.active {
+.color-select-btn.selected {
+  opacity: 1;
+  border-color: #ffffff;
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.color-order {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ff6b00;
+  color: #000;
+  font-size: 10px;
+  font-weight: bold;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.color-select-btn:not(.selected) .color-order {
+  display: none;
+}
+
+.effect-hint {
+  font-size: 11px;
+  color: #555;
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+.effect-action-row {
+  margin-bottom: 16px;
+}
+
+.effect-action-row .running {
   background: #ff4444;
 }
 
