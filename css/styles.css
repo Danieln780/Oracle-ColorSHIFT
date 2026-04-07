@@ -911,16 +911,31 @@ h1 {
   gap: 8px;
 }
 
+.preset-save-section {
+  margin-bottom: 16px;
+}
+
+.preset-save-section .effect-hint {
+  margin-bottom: 8px;
+}
+
+.preset-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .preset-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 10px;
+  padding: 12px;
   background: #1a1a24;
   border: 1px solid #282830;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
 }
 
 .preset-card:active,
@@ -930,35 +945,55 @@ h1 {
 }
 
 .preset-card.builtin {
-  border-style: dashed;
+  border-style: solid;
 }
 
-.preset-colors {
-  display: flex;
-  gap: 4px;
-}
-
-.preset-dot {
-  width: 16px;
-  height: 16px;
+.preset-icon-dot {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  color: #fff;
+}
+
+.preset-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .preset-name {
-  flex: 1;
-  font-size: 14px;
+  font-size: 12px;
   color: #ccc;
+  display: block;
+  line-height: 1.3;
+}
+
+.preset-type {
+  font-size: 10px;
+  color: #666;
+  text-transform: uppercase;
 }
 
 .preset-delete-btn {
+  position: absolute;
+  top: 4px;
+  right: 6px;
   background: none;
   border: none;
-  color: #666;
-  font-size: 20px;
+  color: #555;
+  font-size: 16px;
   cursor: pointer;
-  padding: 0 4px;
   line-height: 1;
+}
+
+.preset-save-row input.error {
+  border-color: #ff4444;
 }
 
 .preset-delete-btn:hover {
