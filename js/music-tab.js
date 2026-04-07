@@ -160,6 +160,8 @@ const MusicTab = {
     this.isListening = true;
     document.getElementById('music-start-btn').textContent = 'Stop Listening';
     document.getElementById('music-start-btn').classList.add('active-btn');
+    const toggleBtn = document.getElementById('music-toggle-btn');
+    if (toggleBtn) { toggleBtn.classList.remove('off'); toggleBtn.classList.add('on'); }
 
     // Request wake lock to prevent screen from locking
     try {
@@ -181,6 +183,8 @@ const MusicTab = {
     if (this.audioCtx) this.audioCtx.close();
     document.getElementById('music-start-btn').textContent = 'Start Listening';
     document.getElementById('music-start-btn').classList.remove('active-btn');
+    const toggleBtn = document.getElementById('music-toggle-btn');
+    if (toggleBtn) { toggleBtn.classList.remove('on'); toggleBtn.classList.add('off'); }
 
     // Release wake lock
     if (this.wakeLock) {

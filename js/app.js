@@ -72,6 +72,22 @@ document.getElementById('ble-connect-btn').addEventListener('click', () => bleCo
 // Scan — opens picker showing ALL nearby BLE devices (manual pick)
 document.getElementById('ble-scan-btn').addEventListener('click', () => bleConnect('scan'));
 
+// Music quick toggle
+document.getElementById('music-toggle-btn')?.addEventListener('click', () => {
+  const btn = document.getElementById('music-toggle-btn');
+  if (typeof MusicTab !== 'undefined') {
+    if (MusicTab.isListening) {
+      MusicTab.stop();
+      btn.classList.remove('on');
+      btn.classList.add('off');
+    } else {
+      MusicTab.start();
+      btn.classList.remove('off');
+      btn.classList.add('on');
+    }
+  }
+});
+
 // Static color button — exits effect mode, returns to solid color
 document.getElementById('effect-static-btn')?.addEventListener('click', () => {
   if (typeof EffectsTab !== 'undefined') EffectsTab.goStatic();
